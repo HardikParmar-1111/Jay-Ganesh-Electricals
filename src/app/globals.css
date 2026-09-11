@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa; /* zinc-50 (off-white Apple style) */
+  --foreground: #18181b; /* zinc-900 */
+  
+  /* UI UX Pro Max - Glassmorphism Variables */
+  --blur-amount: 15px;
+  --glass-opacity: 0.75;
+  --border-color: rgba(228, 228, 231, 0.8); /* zinc-200 subtle */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  /* Brand Colors */
+  --color-brand-gold: #D4A843;
+  --color-brand-blue: #3B82F6;
+  
+  /* Custom Fonts (mapped from Next.js variables) */
+  --font-heading: var(--font-rubik);
+  --font-body: var(--font-nunito-sans);
+
+  /* Squircle border radii */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root.dark {
+  --background: #09090b; /* zinc-950 */
+  --foreground: #fafafa; /* zinc-50 */
+  
+  /* Dark mode glass adjustments */
+  --glass-opacity: 0.8;
+  --border-color: rgba(39, 39, 42, 0.8); /* zinc-800 subtle */
 }
+
+@custom-variant dark (&:is(.dark *));
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, var(--glass-opacity));
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--border-color);
+  }
+  
+  .dark .glass {
+    background: rgba(15, 23, 42, var(--glass-opacity));
+  }
+
+  /* Squircle masking for advanced iOS shapes (optional refinement) */
+  .squircle {
+    border-radius: var(--radius-2xl);
+  }
 }
