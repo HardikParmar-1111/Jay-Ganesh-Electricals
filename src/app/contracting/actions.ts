@@ -53,6 +53,7 @@ export async function submitQuote(
 
   revalidatePath("/customer/dashboard");
   revalidatePath("/admin/dashboard");
+  revalidatePath("/tracker");
 
   return {
     success: true,

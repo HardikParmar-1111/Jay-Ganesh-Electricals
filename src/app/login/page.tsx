@@ -7,18 +7,57 @@ import { Mail, Lock, User, Phone, ArrowLeft, AlertCircle, CheckCircle2, Loader2 
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { login, signup, AuthActionResult } from "@/app/auth/actions";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [status, setStatus] = useState<AuthActionResult | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleAction = (formData: FormData) => {
     setStatus(null);
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
+
     startTransition(async () => {
       if (mode === "login") {
-        const res = await login(formData);
-        if (res?.error) setStatus(res);
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          setStatus({
+            error: error.message.includes("Invalid login credentials")
+              ? "Invalid email or password. Please try again."
+              : error.message,
+          });
+          return;
+        }
+
+        let targetPath = "/catalog";
+        try {
+          if (data?.user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", data.user.id)
+              .maybeSingle();
+
+            if (profile?.role === "admin") {
+              targetPath = "/admin";
+            }
+          }
+        } catch {
+          targetPath = "/catalog";
+        }
+
+        await login(formData).catch(() => {});
+        router.push(targetPath);
+        router.refresh();
       } else {
         const res = await signup(formData);
         if (res) setStatus(res);

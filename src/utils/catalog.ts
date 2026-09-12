@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { MOCK_PRODUCTS, Product, ProductCategory } from "@/data/products";
+import { Product, ProductCategory } from "@/data/products";
 import { categoryToSlug, slugToCategory } from "./catalog-slugs";
 
 export { categoryToSlug, slugToCategory };
@@ -25,8 +25,6 @@ export function mapDbItemToProduct(item: any): Product {
     gallery: item.gallery || [
       item.image_url ||
         "https://images.unsplash.com/photo-1558222218-b7b54eede3f3?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1592652495632-421711df7798?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=800&auto=format&fit=crop",
     ],
     specs: parsedSpecs,
     inStock: item.is_active ?? true,
@@ -44,22 +42,24 @@ export async function getCatalogProducts(): Promise<Product[]> {
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      console.error("Supabase error querying catalog_items:", error);
+      return [];
+    }
+
+    if (data && data.length > 0) {
       return data.map(mapDbItemToProduct);
     }
-  } catch {
-    // Fallback to enriched mock data
+  } catch (err) {
+    console.error("Failed to fetch catalog products from Supabase:", err);
   }
 
-  return MOCK_PRODUCTS;
+  return [];
 }
 
 // Fetch product by ID
 export async function getProductById(id: string): Promise<Product | null> {
   const decodedId = decodeURIComponent(id).trim();
-
-  // Check mock products first for instant resolution if mock
-  const mockMatch = MOCK_PRODUCTS.find((p) => p.id === decodedId);
 
   try {
     const supabase = await createClient();
@@ -72,11 +72,11 @@ export async function getProductById(id: string): Promise<Product | null> {
     if (!error && data) {
       return mapDbItemToProduct(data);
     }
-  } catch {
-    // fall through
+  } catch (err) {
+    console.error("Failed to fetch product by id from Supabase:", err);
   }
 
-  return mockMatch || null;
+  return null;
 }
 
 // Fetch products by category
@@ -89,7 +89,7 @@ export async function getProductsByCategory(categoryName: string): Promise<Produ
   }
 
   return allProducts.filter((p) => {
-    const pCategoryNorm = p.category.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const pCategoryNorm = (p.category || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     return pCategoryNorm === normalizedTarget;
   });
 }

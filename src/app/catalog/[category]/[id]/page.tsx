@@ -6,6 +6,9 @@ import { ProductDetailClient } from "@/components/ProductDetailClient";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface ProductPageProps {
   params: Promise<{
     category: string;

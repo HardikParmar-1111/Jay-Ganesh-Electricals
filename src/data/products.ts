@@ -57,27 +57,27 @@ export const FEATURED_CATEGORIES: CategoryCardData[] = [
     slug: "modular-switches",
     tagline: "Architectural & Luxury",
     description: "Flame-retardant polycarbonate switches, broad rockers, and precision dimmers.",
-    image: "https://images.unsplash.com/photo-1558222218-b7b54eede3f3?q=80&w=800&auto=format&fit=crop",
+    image: "/images/categories/modular-switches.png",
     highlight: "10-Year Warranty",
     itemCount: 3,
   },
   {
-    name: "Switchgears",
-    slug: "switchgears",
-    tagline: "Industrial Grade Protection",
-    description: "C-Curve MCBs, life-saving 30mA RCCBs, and distribution safety systems.",
-    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=800&auto=format&fit=crop",
-    highlight: "10kA Breaking Capacity",
-    itemCount: 2,
+    name: "Boxes & Enclosures",
+    slug: "boxes-enclosures",
+    tagline: "Premium Wooden Boards",
+    description: "Elegant wooden concealed boxes and distribution boards for luxury interiors.",
+    image: "/images/categories/boxes-enclosures.png",
+    highlight: "Handcrafted Quality",
+    itemCount: 1,
   },
   {
-    name: "Power Accessories",
-    slug: "power-accessories",
-    tagline: "Heavy-Duty & Surge Safe",
-    description: "Modular AC starter boxes and surge-suppressed copper extension enclosures.",
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop",
-    highlight: "IS Certified Copper",
-    itemCount: 2,
+    name: "Fans",
+    slug: "fans",
+    tagline: "High-Speed & Elegant",
+    description: "Energy-efficient ceiling fans with premium metallic finishes and noiseless operation.",
+    image: "/images/categories/fans.png",
+    highlight: "5-Star Rated",
+    itemCount: 1,
   },
 ];
 
@@ -393,33 +393,46 @@ export const MOCK_PRODUCTS: Product[] = [
   },
 ];
 
-export const ROOM_KITS = [
+export interface ElectricalBundleKit {
+  id: string;
+  name: string;
+  itemCount: number;
+  priceRange: string;
+  description: string;
+  image: string;
+}
+
+export const ROOM_KITS: ElectricalBundleKit[] = [
   {
     id: "kit-1",
-    name: "Master Bedroom Kit",
-    itemCount: 12,
-    priceRange: "₹4,500 - ₹6,000",
-    image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=800&auto=format&fit=crop",
+    name: "1BHK Standard Wiring Kit",
+    itemCount: 24,
+    priceRange: "₹8,500",
+    description: "Complete modular switches, wires, and MCBs for a standard 1BHK.",
+    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop",
   },
   {
     id: "kit-2",
-    name: "Kitchen Appliance Kit",
+    name: "Kitchen Heavy Appliance Kit",
     itemCount: 8,
-    priceRange: "₹3,200 - ₹4,800",
-    image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=800&auto=format&fit=crop",
+    priceRange: "₹2,200",
+    description: "16A/20A sockets, heavy-duty switches, and A/C box enclosures.",
+    image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=800&auto=format&fit=crop",
   },
   {
     id: "kit-3",
-    name: "Living Room Kit",
-    itemCount: 18,
-    priceRange: "₹7,500 - ₹10,000",
-    image: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=800&auto=format&fit=crop",
+    name: "Smart Living Room Upgrade",
+    itemCount: 14,
+    priceRange: "₹5,500",
+    description: "Smart touch switches, dimmers, and decorative fan plates.",
+    image: "https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=800&auto=format&fit=crop",
   },
   {
     id: "kit-4",
-    name: "Bathroom Kit",
-    itemCount: 5,
-    priceRange: "₹2,000 - ₹3,500",
+    name: "Bathroom & Geyser Kit",
+    itemCount: 6,
+    priceRange: "₹1,200",
+    description: "Water-resistant enclosures and high-load switches.",
     image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop",
   },
 ];

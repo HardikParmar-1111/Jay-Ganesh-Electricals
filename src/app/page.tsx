@@ -77,19 +77,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Shop by Room Section */}
+      {/* Curated Electrical Bundles Section */}
       <section className="py-20 bg-slate-50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-10">
             <div>
-              <h2 className="text-3xl font-heading font-bold text-slate-900 dark:text-white mb-2">
-                Shop by Room
+              <h2 className="text-3xl font-heading font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
+                Curated Electrical Bundles
               </h2>
               <p className="text-slate-600 dark:text-slate-400">
-                Curated bundles for every space in your home.
+                Complete wiring and switchgear kits for your space.
               </p>
             </div>
-            <Link href="/catalog" className="hidden sm:inline-flex text-brand-blue font-medium hover:underline items-center gap-1">
+            <Link href="/catalog" className="hidden sm:inline-flex text-brand-blue font-medium hover:underline items-center gap-1 transition-colors">
               View All <ArrowRight size={16} />
             </Link>
           </div>
@@ -103,10 +103,10 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="min-w-[280px] w-[280px] md:w-[320px] snap-center shrink-0 flex flex-col group"
+                className="min-w-[280px] w-[280px] md:w-[320px] snap-center shrink-0 flex flex-col group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="h-48 overflow-hidden relative">
-                  {/* Fallback gradient if image fails, otherwise we use the image from unsplash */}
+                <div className="aspect-video w-full overflow-hidden relative">
+                  {/* Fallback gradient if image fails */}
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800" />
                   <img 
                     src={kit.image} 
@@ -114,14 +114,26 @@ export default function Home() {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 relative z-10"
                     loading="lazy"
                   />
-                  <div className="absolute top-3 left-3 z-20 glass px-2 py-1 rounded-full text-xs font-semibold">
+                  <div className="absolute top-3 left-3 z-20 glass px-2.5 py-1 rounded-full text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm backdrop-blur-md">
                     {kit.itemCount} items
                   </div>
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">{kit.name}</h3>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Starts from {kit.priceRange}</p>
+                    <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {kit.name}
+                    </h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-4 line-clamp-2">
+                      {kit.description}
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Starts from
+                    </span>
+                    <span className="text-base font-bold text-slate-900 dark:text-white">
+                      {kit.priceRange}
+                    </span>
                   </div>
                 </div>
               </MotionCard>

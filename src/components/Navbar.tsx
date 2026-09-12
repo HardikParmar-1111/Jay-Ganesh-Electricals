@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut, ShieldCheck, User } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -18,6 +18,7 @@ export function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<"admin" | "customer" | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
@@ -50,13 +51,17 @@ export function Navbar() {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       const activeUser = session?.user ?? null;
       setUser(activeUser);
       if (activeUser) {
         await fetchProfileRole(activeUser.id);
       } else {
         setRole(null);
+      }
+
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        router.refresh();
       }
     });
 
@@ -70,24 +75,30 @@ export function Navbar() {
     return null;
   }
 
-  // Base links visible to all users
-  const baseLinks = [
-    { name: "Home", href: "/" },
+  // Base public links
+  const navLinks: { name: string; href: string }[] = [
     { name: "Catalog", href: "/catalog" },
     { name: "Contracting", href: "/contracting" },
-    { name: "Tracker", href: "/tracker" },
   ];
 
-  // Dynamic Dashboard Link: Only shown when authenticated, pointing to the exact role dashboard
-  const navLinks = [...baseLinks];
-  if (user) {
-    const dashboardHref = role === "admin" ? "/admin/dashboard" : "/customer/dashboard";
-    const dashboardLabel = role === "admin" ? "Admin Panel" : "Dashboard";
-    navLinks.push({ name: dashboardLabel, href: dashboardHref });
+  // Customers and guests see Tracker; hide customer-specific Tracker from admin
+  if (role !== "admin") {
+    navLinks.push({ name: "Tracker", href: "/tracker" });
+  }
+
+  // Customer users see their personal Dashboard link
+  if (user && role === "customer") {
+    navLinks.push({ name: "Dashboard", href: "/customer/dashboard" });
   }
 
   const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
     await signout();
+    router.refresh();
+    if (pathname?.startsWith("/customer") || pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin")) {
+      router.push("/");
+    }
   };
 
   return (
@@ -119,7 +130,7 @@ export function Navbar() {
                     <Link
                       key={link.name}
                       href={link.href}
-                      className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors hover:text-brand-blue"
+                      className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand-blue"
                     >
                       <span
                         className={`relative z-10 ${isActive ? "text-brand-blue font-semibold" : "text-foreground/80"
@@ -145,15 +156,15 @@ export function Navbar() {
                 {user ? (
                   <div className="flex items-center gap-2">
                     <Link
-                      href={role === "admin" ? "/admin/dashboard" : "/customer/dashboard"}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-gold/10 text-brand-gold border border-brand-gold/20"
+                      href={role === "admin" ? "/admin" : "/customer/dashboard"}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-gold/10 text-brand-gold border border-brand-gold/20 transition-all duration-300 ease-in-out hover:bg-brand-gold/20 active:scale-95"
                     >
                       {role === "admin" ? <ShieldCheck size={14} /> : <User size={14} />}
                       <span>{role === "admin" ? "Admin" : "Account"}</span>
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-300 ease-in-out active:scale-95"
                       title="Sign Out"
                     >
                       <LogOut size={14} />
@@ -196,7 +207,7 @@ export function Navbar() {
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               className="absolute top-[68px] left-0 right-0 md:hidden glass rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-xl overflow-hidden z-50"
             >
-              <div className="px-4 py-4 space-y-1">
+              <div className="px-4 pt-4 pb-8 space-y-1">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
                   return (
@@ -204,7 +215,7 @@ export function Navbar() {
                       key={link.name}
                       href={link.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`block px-4 py-3 rounded-2xl text-base font-medium transition-colors ${isActive
+                      className={`block px-4 py-3 rounded-2xl text-base font-medium transition-all duration-300 ease-in-out ${isActive
                           ? "bg-brand-blue/10 text-brand-blue font-semibold"
                           : "text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
@@ -218,15 +229,25 @@ export function Navbar() {
                     <ThemeToggle />
                   </div>
                   {user ? (
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        handleSignOut();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 text-red-500 py-3 rounded-2xl font-medium hover:bg-red-50 dark:hover:bg-red-950/20"
-                    >
-                      <LogOut size={16} /> Sign Out
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        href={role === "admin" ? "/admin" : "/customer/dashboard"}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm bg-brand-gold/10 text-brand-gold border border-brand-gold/20 active:scale-95 transition-all duration-300 ease-in-out"
+                      >
+                        {role === "admin" ? <ShieldCheck size={16} /> : <User size={16} />}
+                        <span>{role === "admin" ? "Admin Control Panel" : "My Account"}</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          handleSignOut();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 text-red-500 py-3 rounded-2xl font-medium hover:bg-red-50 dark:hover:bg-red-950/20 active:scale-95 transition-all duration-300 ease-in-out"
+                      >
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    </div>
                   ) : (
                     <Button
                       variant="primary"

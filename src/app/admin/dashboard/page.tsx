@@ -35,6 +35,7 @@ export default async function AdminDashboardPage() {
     { count: activeProjects },
     { count: catalogCount },
     { data: leadsData },
+    { data: catalogData },
   ] = await Promise.all([
     supabase
       .from("customer_leads")
@@ -52,6 +53,13 @@ export default async function AdminDashboardPage() {
       )
       .order("created_at", { ascending: false })
       .limit(50),
+    supabase
+      .from("catalog_items")
+      .select(
+        "id, name, category, price, description, image_url, is_active, created_at"
+      )
+      .order("created_at", { ascending: false })
+      .limit(60),
   ]);
 
   return (
@@ -60,9 +68,10 @@ export default async function AdminDashboardPage() {
       metrics={{
         totalLeads: totalLeads || (leadsData?.length ?? 0),
         activeProjects: activeProjects || 0,
-        catalogCount: catalogCount || 0,
+        catalogCount: catalogCount || (catalogData?.length ?? 0),
       }}
       initialLeads={(leadsData as any) || []}
+      initialCatalogItems={(catalogData as any) || []}
     />
   );
 }

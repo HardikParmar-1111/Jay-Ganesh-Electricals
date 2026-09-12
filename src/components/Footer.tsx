@@ -21,7 +21,7 @@ export function Footer() {
     <footer className="bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 pt-16 pb-8 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          
+
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="inline-flex items-center gap-3 mb-4 group">
               <Logo size={42} className="group-hover:scale-105 transition-transform" />
@@ -57,22 +57,32 @@ export function Footer() {
 
           <div>
             <h3 className="font-semibold mb-4 text-foreground">Contact</h3>
-            <ul className="space-y-3">
-              <li className="text-slate-500">
-                123 Electrical Market,<br />
-                Mumbai, 400001
+            <ul className="space-y-3 text-sm">
+              <li className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                Thanagalol, Jetpur,<br />
+                Gujarat 360370
               </li>
-              <li className="text-slate-500">
-                +91 98765 43210
+              <li>
+                <a
+                  href="tel:+919724921890"
+                  className="text-slate-500 dark:text-slate-400 hover:text-brand-blue dark:hover:text-white transition-colors block"
+                >
+                  +91 9724921890
+                </a>
               </li>
-              <li className="text-slate-500">
-                contact@jayganesh.com
+              <li>
+                <a
+                  href="mailto:contact@jayganesh.com"
+                  className="text-slate-500 dark:text-slate-400 hover:text-brand-blue dark:hover:text-white transition-colors block"
+                >
+                  contact@jayganesh.com
+                </a>
               </li>
             </ul>
           </div>
 
         </div>
-        
+
         <div className="border-t border-slate-200 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             &copy; {new Date().getFullYear()} Jay Ganesh Electrical. All rights reserved.

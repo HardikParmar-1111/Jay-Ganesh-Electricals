@@ -19,8 +19,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
-import { MOCK_PRODUCTS } from "@/data/products";
 import { updateLeadStatus, LeadStatus } from "@/app/admin/actions";
+import { AddProductModal } from "./AddProductModal";
 
 const ADMIN_TABS = [
   { id: "analytics", label: "Analytics", icon: <BarChart3 size={18} /> },
@@ -43,6 +43,17 @@ export interface AdminLead {
   } | null;
 }
 
+export interface AdminCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  description?: string;
+  image_url?: string;
+  is_active?: boolean;
+  created_at?: string;
+}
+
 interface AdminDashboardClientProps {
   metrics: {
     totalLeads: number;
@@ -50,18 +61,31 @@ interface AdminDashboardClientProps {
     catalogCount: number;
   };
   initialLeads: AdminLead[];
+  initialCatalogItems?: AdminCatalogItem[];
   adminEmail?: string;
 }
 
 export function AdminDashboardClient({
   metrics,
   initialLeads,
+  initialCatalogItems = [],
   adminEmail,
 }: AdminDashboardClientProps) {
   const [activeTab, setActiveTab] = useState("analytics");
   const [leadsList, setLeadsList] = useState<AdminLead[]>(initialLeads);
+  const [productsList, setProductsList] = useState<AdminCatalogItem[]>(initialCatalogItems);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [updatingLeadId, setUpdatingLeadId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleProductAdded = (newProduct: AdminCatalogItem) => {
+    setProductsList((prev) => [newProduct, ...prev]);
+    setToastMessage(`"${newProduct.name}" added to inventory successfully!`);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
 
   const handleStatusChange = (leadId: string, newStatus: LeadStatus) => {
     setUpdatingLeadId(leadId);
@@ -98,7 +122,7 @@ export function AdminDashboardClient({
           <div className="flex items-center gap-4">
             <Logo size={48} />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-heading font-bold text-zinc-900 dark:text-white mb-0.5">
+              <h1 className="text-2xl sm:text-3xl font-heading font-bold tracking-tight text-zinc-900 dark:text-white mb-0.5">
                 Admin Control Center
               </h1>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm">
@@ -108,6 +132,29 @@ export function AdminDashboardClient({
           </div>
         </div>
 
+        {/* Toast feedback banner */}
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={18} className="shrink-0" />
+                <span className="font-medium">{toastMessage}</span>
+              </div>
+              <button
+                onClick={() => setToastMessage(null)}
+                className="text-xs opacity-75 hover:opacity-100"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Dynamic Tab Navigation (Apple iOS Segmented Style) */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-6">
           {ADMIN_TABS.map((tab) => {
@@ -116,7 +163,7 @@ export function AdminDashboardClient({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ease-in-out active:scale-95 whitespace-nowrap ${
                   isActive
                     ? "bg-zinc-900 text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900"
                     : "bg-white dark:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
@@ -356,27 +403,75 @@ export function AdminDashboardClient({
             {activeTab === "inventory" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Catalog Management</h3>
-                  <Button className="gap-2">
+                  <div>
+                    <h3 className="text-xl font-heading font-bold tracking-tight text-zinc-900 dark:text-white">Catalog Management</h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {productsList.length} items in live inventory
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setIsAddProductModalOpen(true)}
+                    className="gap-2 shadow-sm"
+                  >
                     <Package size={16} /> Add Product
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {MOCK_PRODUCTS.slice(0, 5).map((p) => (
-                    <Card key={p.id} className="p-3 flex flex-col">
-                      <div className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-lg mb-3 overflow-hidden">
-                        <img src={p.image} className="w-full h-full object-cover" alt="" />
-                      </div>
-                      <p className="font-medium text-sm line-clamp-1 mb-1">{p.name}</p>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-xs font-bold text-brand-gold">₹{p.price}</span>
-                        <span className="text-xs text-green-600 font-medium">
-                          {p.inStock ? "In Stock" : "Out"}
+
+                {productsList.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {productsList.map((p) => (
+                      <Card
+                        key={p.id}
+                        className="p-3 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 ease-in-out"
+                      >
+                        <div className="aspect-square bg-zinc-100 dark:bg-zinc-800/70 rounded-xl mb-2.5 overflow-hidden border border-zinc-100 dark:border-zinc-800 flex items-center justify-center">
+                          {p.image_url ? (
+                            <img
+                              src={p.image_url}
+                              className="w-full h-full object-cover"
+                              alt={p.name}
+                            />
+                          ) : (
+                            <Package size={28} className="text-zinc-300 dark:text-zinc-600" />
+                          )}
+                        </div>
+                        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider line-clamp-1 mb-0.5">
+                          {p.category}
                         </span>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                        <p className="font-medium text-sm text-zinc-900 dark:text-white line-clamp-1 mb-2">
+                          {p.name}
+                        </p>
+                        <div className="flex justify-between items-center mt-auto pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+                          <span className="font-bold text-brand-gold font-mono">
+                            ₹{Number(p.price).toLocaleString("en-IN")}
+                          </span>
+                          <span
+                            className={`text-[11px] font-medium ${
+                              p.is_active !== false
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-zinc-400"
+                            }`}
+                          >
+                            {p.is_active !== false ? "In Stock" : "Out of Stock"}
+                          </span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-12 text-center border-dashed border-2 bg-transparent text-zinc-500">
+                    <Package size={40} className="mx-auto mb-3 opacity-40 text-brand-gold" />
+                    <h4 className="font-semibold text-base text-zinc-900 dark:text-white mb-1">
+                      No Catalog Items Found
+                    </h4>
+                    <p className="text-sm mb-4">
+                      Click &quot;Add Product&quot; above to insert your first electrical hardware item into the catalog.
+                    </p>
+                    <Button onClick={() => setIsAddProductModalOpen(true)} className="gap-2">
+                      <Package size={16} /> Add First Product
+                    </Button>
+                  </Card>
+                )}
               </div>
             )}
 
@@ -392,6 +487,13 @@ export function AdminDashboardClient({
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Add Product Modal */}
+        <AddProductModal
+          isOpen={isAddProductModalOpen}
+          onClose={() => setIsAddProductModalOpen(false)}
+          onSuccess={handleProductAdded}
+        />
       </div>
     </div>
   );

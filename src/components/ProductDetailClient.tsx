@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   ShieldCheck,
@@ -16,11 +17,13 @@ import {
   Sliders,
   ChevronDown,
   Layers,
+  Bookmark,
 } from "lucide-react";
 import { Product } from "@/data/products";
 import { categoryToSlug } from "@/utils/catalog-slugs";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/utils/supabase/client";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -35,6 +38,9 @@ const FINISH_VARIANTS = [
 ];
 
 export function ProductDetailClient({ product, categorySlug }: ProductDetailClientProps) {
+  const router = useRouter();
+  const supabase = createClient();
+
   const images =
     product.gallery && product.gallery.length > 0
       ? product.gallery
@@ -47,6 +53,8 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form state for Request Quote
   const [quoteForm, setQuoteForm] = useState({
@@ -55,6 +63,83 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
     quantity: "10 units",
     notes: "",
   });
+
+  // Check if product is in saved supplies
+  useEffect(() => {
+    let isMounted = true;
+    async function checkSavedStatus() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user || !isMounted) return;
+
+        const { data, error } = await supabase
+          .from("saved_supplies")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("item_id", product.id)
+          .maybeSingle();
+
+        if (!error && data && isMounted) {
+          setIsSaved(true);
+        }
+      } catch (err) {
+        console.error("Failed to check saved status:", err);
+      }
+    }
+    checkSavedStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, [product.id, supabase]);
+
+  const handleToggleSave = async () => {
+    if (isSaving) return;
+    try {
+      setIsSaving(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const nextSaved = !isSaved;
+      setIsSaved(nextSaved);
+
+      if (nextSaved) {
+        const { error } = await supabase.from("saved_supplies").insert({
+          user_id: user.id,
+          item_id: product.id,
+        });
+        if (error) {
+          console.error("Error saving supply:", error);
+          setIsSaved(false);
+        } else {
+          router.refresh();
+        }
+      } else {
+        const { error } = await supabase
+          .from("saved_supplies")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("item_id", product.id);
+        if (error) {
+          console.error("Error removing saved supply:", error);
+          setIsSaved(true);
+        } else {
+          router.refresh();
+        }
+      }
+    } catch (err) {
+      console.error("Error toggling saved supply:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleShare = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -96,6 +181,22 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
 
           <div className="flex items-center gap-2">
             <button
+              onClick={handleToggleSave}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all active:scale-95 ${
+                isSaved
+                  ? "bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40"
+                  : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+              }`}
+              title={isSaved ? "Saved to your supplies" : "Save this supply"}
+            >
+              <Bookmark
+                size={14}
+                className={isSaved ? "fill-amber-500 text-amber-600 dark:fill-amber-400 dark:text-amber-400" : ""}
+              />
+              <span>{isSaved ? "Saved to Supplies" : "Save Supply"}</span>
+            </button>
+
+            <button
               onClick={handleShare}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
               title="Share product link"
@@ -132,8 +233,25 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                 )}
               </div>
 
-              <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-800">
-                {product.brand}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-800">
+                  {product.brand}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleSave}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-95 shadow-sm border ${
+                    isSaved
+                      ? "bg-amber-500 text-white border-amber-600 shadow-amber-500/20"
+                      : "bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 border-slate-200 dark:border-slate-800"
+                  }`}
+                  title={isSaved ? "Saved to your supplies" : "Save this supply"}
+                >
+                  <Bookmark
+                    size={16}
+                    className={isSaved ? "fill-white text-white" : ""}
+                  />
+                </button>
               </div>
             </div>
 
@@ -149,11 +267,10 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                     key={idx}
                     type="button"
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-2 transition-all p-1.5 ${
-                      activeImageIndex === idx
+                    className={`relative aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-2 transition-all p-1.5 ${activeImageIndex === idx
                         ? "border-brand-gold shadow-md ring-2 ring-brand-gold/20"
                         : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 opacity-80 hover:opacity-100"
-                    }`}
+                      }`}
                   >
                     <img
                       src={imgUrl}
@@ -241,16 +358,14 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                     key={variant.name}
                     type="button"
                     onClick={() => setSelectedFinish(variant.name)}
-                    className={`group flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
-                      selectedFinish === variant.name
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${selectedFinish === variant.name
                         ? "border-brand-gold bg-brand-gold/5 dark:bg-brand-gold/10 text-slate-900 dark:text-white ring-1 ring-brand-gold"
                         : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <span
-                      className={`w-4 h-4 rounded-full border ${variant.class} ${
-                        variant.border ? "border-slate-300 dark:border-slate-500" : ""
-                      }`}
+                      className={`w-4 h-4 rounded-full border ${variant.class} ${variant.border ? "border-slate-300 dark:border-slate-500" : ""
+                        }`}
                     />
                     <span>{variant.name}</span>
                   </button>
@@ -258,20 +373,40 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
               </div>
             </div>
 
-            {/* Primary Action Button: "Request Quote" */}
+            {/* Primary Action Button: "Request Quote" + "Save Supply" */}
             <div className="pt-2">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => {
-                  setShowQuoteModal(true);
-                  setQuoteSubmitted(false);
-                }}
-                className="w-full py-4 text-base font-semibold shadow-lg shadow-brand-gold/20 flex items-center justify-center gap-2"
-              >
-                <FileText size={18} />
-                Request Project Quote / Inquire
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => {
+                    setShowQuoteModal(true);
+                    setQuoteSubmitted(false);
+                  }}
+                  className="flex-1 py-4 text-base font-semibold shadow-lg shadow-brand-gold/20 flex items-center justify-center gap-2"
+                >
+                  <FileText size={18} />
+                  Request Project Quote / Inquire
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleToggleSave}
+                  className={`h-12 sm:h-14 px-4 sm:px-5 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm transition-all active:scale-95 flex-shrink-0 ${
+                    isSaved
+                      ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400 font-semibold shadow-sm"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-amber-300 dark:hover:border-amber-500/40 hover:bg-amber-50/50 dark:hover:bg-amber-500/5"
+                  }`}
+                  title={isSaved ? "Saved to your supplies" : "Save to Supplies"}
+                >
+                  <Bookmark
+                    size={19}
+                    className={isSaved ? "fill-amber-500 text-amber-600 dark:fill-amber-400 dark:text-amber-400" : "text-slate-400"}
+                  />
+                  <span className="font-semibold text-sm">
+                    {isSaved ? "Saved" : "Save Supply"}
+                  </span>
+                </button>
+              </div>
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
                 Need bulk supply or complete wiring project quotation? Contact our engineering desk.
               </p>
@@ -302,9 +437,8 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                 </div>
                 <ChevronDown
                   size={18}
-                  className={`text-slate-400 transition-transform duration-200 ${
-                    isAccordionOpen ? "rotate-180" : ""
-                  }`}
+                  className={`text-slate-400 transition-transform duration-200 ${isAccordionOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -314,9 +448,8 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                     {Object.entries(product.specs).map(([key, val], idx) => (
                       <div
                         key={key}
-                        className={`py-2.5 flex items-center justify-between text-xs sm:text-sm ${
-                          idx % 2 === 0 ? "bg-slate-50/50 dark:bg-slate-800/20 px-2 rounded-lg" : "px-2"
-                        }`}
+                        className={`py-2.5 flex items-center justify-between text-xs sm:text-sm ${idx % 2 === 0 ? "bg-slate-50/50 dark:bg-slate-800/20 px-2 rounded-lg" : "px-2"
+                          }`}
                       >
                         <span className="font-medium text-slate-500 dark:text-slate-400">{key}</span>
                         <span className="font-semibold text-slate-900 dark:text-white text-right">
@@ -409,7 +542,7 @@ export function ProductDetailClient({ product, categorySlug }: ProductDetailClie
                     <input
                       type="tel"
                       required
-                      placeholder="+91 98765 43210"
+                      placeholder="+91 97249 21890"
                       value={quoteForm.phone}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-gold"

@@ -6,6 +6,8 @@ import { X, Lock, Mail, User, Phone, AlertCircle, CheckCircle2, Loader2 } from "
 import { Button } from "./ui/Button";
 import { Logo } from "./ui/Logo";
 import { login, signup, AuthActionResult } from "@/app/auth/actions";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [status, setStatus] = useState<AuthActionResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -21,20 +24,55 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     e.preventDefault();
     setStatus(null);
     const formData = new FormData(e.currentTarget);
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
 
     startTransition(async () => {
       if (isLogin) {
-        const res = await login(formData);
-        if (res?.error) {
-          setStatus(res);
-        } else {
-          onClose();
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          setStatus({
+            error: error.message.includes("Invalid login credentials")
+              ? "Invalid email or password. Please try again."
+              : error.message,
+          });
+          return;
         }
+
+        let targetPath = "/catalog";
+        try {
+          if (data?.user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", data.user.id)
+              .maybeSingle();
+
+            if (profile?.role === "admin") {
+              targetPath = "/admin";
+            }
+          }
+        } catch {
+          targetPath = "/catalog";
+        }
+
+        // Also sync server action / cookies if available
+        await login(formData).catch(() => {});
+
+        onClose();
+        router.push(targetPath);
+        router.refresh();
       } else {
         const res = await signup(formData);
         if (res) {
           setStatus(res);
           if (res.success) {
+            router.refresh();
             // Optional switch back to login
             setTimeout(() => setIsLogin(true), 2500);
           }

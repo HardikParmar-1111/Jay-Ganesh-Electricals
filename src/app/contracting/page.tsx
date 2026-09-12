@@ -109,7 +109,7 @@ export default function SmartQuotePage() {
 
   const generateWhatsAppLink = () => {
     const text = `Hi Jay Ganesh Electrical,\n\nI used your Smart Quote Estimator:\n*Property*: ${selectedSizeObj.label}\n*Services*: ${selectedServiceLabels.join(", ")}\n*Quality*: ${selectedQualityObj.label}\n*Estimate*: ₹${calculateEstimate.min.toLocaleString()} - ₹${calculateEstimate.max.toLocaleString()}\n\nPlease contact me for consultation.`;
-    return `https://wa.me/919876543210?text=${encodeURIComponent(text)}`;
+    return `https://wa.me/919724921890?text=${encodeURIComponent(text)}`;
   };
 
   return (
@@ -199,11 +199,10 @@ export default function SmartQuotePage() {
                         </p>
                       </div>
                       <div
-                        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${
-                          selectedServices.includes(srv.id)
+                        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${selectedServices.includes(srv.id)
                             ? "bg-brand-blue border-brand-blue text-white"
                             : "border-slate-300"
-                        }`}
+                          }`}
                       >
                         {selectedServices.includes(srv.id) && <ShieldCheck size={14} />}
                       </div>
