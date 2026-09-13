@@ -137,9 +137,9 @@ export function AdminNavbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="absolute top-[68px] left-0 right-0 md:hidden glass rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-xl overflow-hidden z-50"
+              className="absolute top-[68px] left-0 right-0 md:hidden bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden z-50"
             >
-              <div className="px-4 pt-4 pb-8 space-y-1">
+              <div className="flex flex-col gap-4 p-6">
                 {adminLinks.map((link) => {
                   const isActive =
                     pathname === link.href ||
@@ -166,7 +166,7 @@ export function AdminNavbar() {
                   );
                 })}
 
-                <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 flex flex-col gap-2">
+                <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 flex flex-col gap-3">
                   <div className="border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-500/10 rounded-2xl px-4 py-2.5 flex items-center justify-center gap-2 text-xs font-semibold">
                     <ShieldCheck size={16} />
                     <span>Admin Mode Active</span>

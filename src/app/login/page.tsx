@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, startTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, Phone, ArrowLeft, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
@@ -14,14 +14,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [status, setStatus] = useState<AuthActionResult | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startActionTransition] = useTransition();
 
   const handleAction = (formData: FormData) => {
     setStatus(null);
     const email = formData.get("email")?.toString().trim() || "";
     const password = formData.get("password")?.toString() || "";
 
-    startTransition(async () => {
+    startActionTransition(async () => {
       if (mode === "login") {
         const supabase = createClient();
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -56,8 +56,10 @@ export default function LoginPage() {
         }
 
         await login(formData).catch(() => {});
-        router.push(targetPath);
-        router.refresh();
+        startTransition(() => {
+          router.push(targetPath);
+          router.refresh();
+        });
       } else {
         const res = await signup(formData);
         if (res) setStatus(res);

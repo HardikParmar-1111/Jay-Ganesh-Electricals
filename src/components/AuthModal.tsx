@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, startTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Lock, Mail, User, Phone, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -18,7 +18,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [status, setStatus] = useState<AuthActionResult | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startActionTransition] = useTransition();
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +27,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const email = formData.get("email")?.toString().trim() || "";
     const password = formData.get("password")?.toString() || "";
 
-    startTransition(async () => {
+    startActionTransition(async () => {
       if (isLogin) {
         const supabase = createClient();
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -65,8 +65,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         await login(formData).catch(() => {});
 
         onClose();
-        router.push(targetPath);
-        router.refresh();
+        startTransition(() => {
+          router.push(targetPath);
+          router.refresh();
+        });
       } else {
         const res = await signup(formData);
         if (res) {
