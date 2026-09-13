@@ -29,6 +29,14 @@ export interface CustomerLead {
   quality_tier: string;
   status: "new" | "in_progress" | "completed";
   created_at: string;
+  item_id?: string | null;
+  catalog_items?: {
+    id: string;
+    name: string;
+    category?: string;
+    image_url?: string;
+    price?: number;
+  } | null;
 }
 
 interface ProjectTrackerClientProps {
@@ -274,7 +282,7 @@ export function ProjectTrackerClient({
                             : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
                         }`}
                       >
-                        <span>{lead.property_size}</span>
+                        <span>{lead.catalog_items ? lead.catalog_items.name : lead.property_size}</span>
                         <span className="text-[10px] opacity-75 font-mono">
                           #{lead.id.slice(0, 6)}
                         </span>
@@ -297,7 +305,9 @@ export function ProjectTrackerClient({
                       {getStatusBadge(selectedLead.status)}
                     </div>
                     <h2 className="text-xl sm:text-2xl font-heading font-bold tracking-tight text-zinc-900 dark:text-white">
-                      {selectedLead.property_size} Electrical Work
+                      {selectedLead.catalog_items
+                        ? `Material Request: ${selectedLead.catalog_items.name}`
+                        : `${selectedLead.property_size} Electrical Work`}
                     </h2>
                   </div>
 

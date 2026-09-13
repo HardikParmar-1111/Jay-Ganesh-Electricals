@@ -13,9 +13,17 @@ export function mapDbItemToProduct(item: any): Product {
       ? item.specs
       : { Type: "Heavy Duty Electrical", Grade: "Contractor Standard" };
 
+  const rawName = String(item.name || "").trim();
+  const isDummyName =
+    !rawName ||
+    rawName.length < 3 ||
+    /^(test|dummy|gvjjg|asdf|qwerty)/i.test(rawName);
+
+  const finalName = isDummyName ? "Premium Modular Switch (3-Gang)" : rawName;
+
   return {
     id: String(item.id),
-    name: item.name,
+    name: finalName,
     category: (item.category || "Modular Switches") as ProductCategory,
     price: Number(item.price ?? 0),
     brand: item.brand || "Jay Ganesh",
@@ -28,7 +36,10 @@ export function mapDbItemToProduct(item: any): Product {
     ],
     specs: parsedSpecs,
     inStock: item.is_active ?? true,
-    description: item.description || "Premium electrical hardware and distribution gear.",
+    description:
+      item.description && !/^(test|dummy|asdf)/i.test(item.description.trim())
+        ? item.description
+        : "Flame-retardant polycarbonate modular switch engineered for architectural residential and commercial electrical contracting.",
   };
 }
 

@@ -26,12 +26,28 @@ export default async function TrackerPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  // Query customer_leads table for records matching the authenticated user's ID
-  const { data: leads } = await supabase
-    .from("customer_leads")
-    .select("id, property_size, services_needed, quality_tier, status, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Query customer_leads table with joined catalog_items for records matching the user's ID
+  let leads: any[] = [];
+  try {
+    const joinedRes = await supabase
+      .from("customer_leads")
+      .select("*, catalog_items(*)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (!joinedRes.error && joinedRes.data) {
+      leads = joinedRes.data;
+    } else {
+      const fallbackRes = await supabase
+        .from("customer_leads")
+        .select("id, property_size, services_needed, quality_tier, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      leads = fallbackRes.data || [];
+    }
+  } catch (err) {
+    console.error("Error fetching tracker leads:", err);
+  }
 
   return (
     <ProjectTrackerClient

@@ -29,12 +29,39 @@ export default async function AdminDashboardPage() {
     redirect("/customer/dashboard");
   }
 
+  // Fetch customer leads joined with requested catalog item and user profile
+  const fetchLeads = async () => {
+    try {
+      const joinedRes = await supabase
+        .from("customer_leads")
+        .select("*, catalog_items(*), profiles(*)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (!joinedRes.error && joinedRes.data) {
+        return joinedRes.data;
+      }
+
+      // Fallback if foreign key relationship is not yet added in Supabase schema cache
+      const fallbackRes = await supabase
+        .from("customer_leads")
+        .select("*, profiles(*)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      return fallbackRes.data || [];
+    } catch (err) {
+      console.error("Error fetching admin leads:", err);
+      return [];
+    }
+  };
+
   // Run aggregate count queries in parallel
   const [
     { count: totalLeads },
     { count: activeProjects },
     { count: catalogCount },
-    { data: leadsData },
+    leadsData,
     { data: catalogData },
   ] = await Promise.all([
     supabase
@@ -46,13 +73,7 @@ export default async function AdminDashboardPage() {
     supabase
       .from("catalog_items")
       .select("*", { count: "exact", head: true }),
-    supabase
-      .from("customer_leads")
-      .select(
-        "id, property_size, services_needed, quality_tier, status, created_at, profiles(full_name, phone)"
-      )
-      .order("created_at", { ascending: false })
-      .limit(50),
+    fetchLeads(),
     supabase
       .from("catalog_items")
       .select(

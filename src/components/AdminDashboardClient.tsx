@@ -37,6 +37,14 @@ export interface AdminLead {
   quality_tier: string;
   status: "new" | "in_progress" | "completed";
   created_at: string;
+  item_id?: string | null;
+  catalog_items?: {
+    id: string;
+    name: string;
+    category?: string;
+    image_url?: string;
+    price?: number;
+  } | null;
   profiles?: {
     full_name?: string;
     phone?: string;
@@ -239,8 +247,8 @@ export function AdminDashboardClient({
                     {leadsList.slice(0, 3).map((lead) => (
                       <Card key={lead.id} className="p-5 space-y-2">
                         <div className="flex justify-between items-start">
-                          <span className="font-semibold text-base text-zinc-900 dark:text-white">
-                            {lead.property_size}
+                          <span className="font-semibold text-base text-zinc-900 dark:text-white truncate max-w-[180px]">
+                            {lead.catalog_items?.name || lead.property_size}
                           </span>
                           {getStatusBadge(lead.status)}
                         </div>
@@ -248,8 +256,8 @@ export function AdminDashboardClient({
                           Client: {lead.profiles?.full_name || "New Client"} •{" "}
                           {lead.profiles?.phone || "No phone"}
                         </p>
-                        <p className="text-xs text-zinc-400">
-                          Tier: {lead.quality_tier} | {lead.services_needed}
+                        <p className="text-xs text-zinc-400 truncate">
+                          {lead.catalog_items ? `Qty: ${lead.property_size} • ${lead.services_needed}` : `Tier: ${lead.quality_tier} | ${lead.services_needed}`}
                         </p>
                       </Card>
                     ))}
@@ -288,10 +296,10 @@ export function AdminDashboardClient({
                           Client / Contact
                         </th>
                         <th className="px-6 py-3.5 font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
-                          Property & Tier
+                          Requested Item / Services
                         </th>
                         <th className="px-6 py-3.5 font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
-                          Services
+                          Scope / Quantity
                         </th>
                         <th className="px-6 py-3.5 font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
                           Current Status
@@ -327,15 +335,44 @@ export function AdminDashboardClient({
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="font-medium text-slate-900 dark:text-white">
-                                {lead.property_size}
-                              </span>
-                              <span className="text-xs text-slate-500 block">
-                                Tier: {lead.quality_tier}
-                              </span>
+                              {lead.catalog_items ? (
+                                <div className="flex items-center gap-2.5">
+                                  {lead.catalog_items.image_url && (
+                                    <img
+                                      src={lead.catalog_items.image_url}
+                                      alt={lead.catalog_items.name}
+                                      className="w-9 h-9 rounded-lg object-contain bg-zinc-100 dark:bg-zinc-800 p-1 flex-shrink-0 border border-zinc-200 dark:border-zinc-700"
+                                    />
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="font-semibold text-zinc-900 dark:text-white truncate max-w-[220px]">
+                                      {lead.catalog_items.name}
+                                    </div>
+                                    <div className="text-xs text-brand-gold font-medium truncate max-w-[220px]">
+                                      {lead.services_needed || lead.catalog_items.category || "Catalog Item"}
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="max-w-xs">
+                                  <div className="font-medium text-zinc-900 dark:text-white truncate">
+                                    {lead.services_needed}
+                                  </div>
+                                  <div className="text-xs text-zinc-400 truncate">
+                                    Tier: {lead.quality_tier}
+                                  </div>
+                                </div>
+                              )}
                             </td>
-                            <td className="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">
-                              {lead.services_needed}
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                {lead.property_size || "10 units"}
+                              </span>
+                              {lead.quality_tier && (
+                                <span className="text-xs text-slate-500 block truncate max-w-[180px]">
+                                  {lead.quality_tier}
+                                </span>
+                              )}
                             </td>
                             <td className="px-6 py-4">{getStatusBadge(lead.status)}</td>
                             <td className="px-6 py-4">

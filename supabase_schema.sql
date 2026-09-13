@@ -62,6 +62,7 @@ ALTER TABLE public.portfolio_projects ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.customer_leads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    item_id UUID REFERENCES public.catalog_items(id) ON DELETE SET NULL,
     property_size TEXT,
     services_needed TEXT,
     quality_tier TEXT,
@@ -91,6 +92,7 @@ CREATE INDEX IF NOT EXISTS idx_portfolio_projects_phase ON public.portfolio_proj
 
 -- Leads indexes (explicit indexes on RLS filter columns prevent full table scans)
 CREATE INDEX IF NOT EXISTS idx_customer_leads_user_id ON public.customer_leads USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_customer_leads_item_id ON public.customer_leads USING btree (item_id);
 CREATE INDEX IF NOT EXISTS idx_customer_leads_status ON public.customer_leads USING btree (status);
 CREATE INDEX IF NOT EXISTS idx_customer_leads_created_at ON public.customer_leads USING btree (created_at DESC);
 
