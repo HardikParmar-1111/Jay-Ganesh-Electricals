@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface SplashScreenProps {
   children?: React.ReactNode;
-  /** Splash screen display duration in milliseconds (default: 2500ms) */
+  /** Splash screen display duration in milliseconds (default: 1300ms) */
   duration?: number;
   /** Whether to show the splash screen only once per browser session */
   oncePerSession?: boolean;
@@ -13,7 +13,7 @@ interface SplashScreenProps {
 
 export function SplashScreen({
   children,
-  duration = 2500,
+  duration = 1300,
   oncePerSession = false,
 }: SplashScreenProps) {
   const [mounted, setMounted] = useState(false);
@@ -37,6 +37,13 @@ export function SplashScreen({
     const timer = setTimeout(() => {
       setIsVisible(false);
       document.body.style.overflow = "";
+
+      // Notify page that splash overlay is fading out so hero animations start in full view
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("splash_screen_completed"));
+        }
+      }, 500);
     }, duration);
 
     return () => {

@@ -17,8 +17,29 @@ export function Navbar() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<"admin" | "customer" | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  const isHomePage = pathname === "/";
+  const SPRING = { type: "spring", stiffness: 420, damping: 34, mass: 0.8 } as const;
+
+  // Hide Navbar at the top of the homepage for full-frame lighting view, reveal on scroll
+  useEffect(() => {
+    if (!isHomePage) {
+      setIsScrolled(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 150);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHomePage]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -77,7 +98,7 @@ export function Navbar() {
 
   // Base public links
   const navLinks: { name: string; href: string }[] = [
-    { name: "Catalog", href: "/catalog" },
+    { name: "Showcase", href: "/#materials" },
     { name: "Contracting", href: "/contracting" },
   ];
 
@@ -103,8 +124,27 @@ export function Navbar() {
 
   return (
     <>
-      <div className="sticky top-3 z-50 mx-4 md:mx-auto max-w-5xl">
-        <header className="bg-white/75 dark:bg-zinc-900/80 backdrop-blur-lg rounded-full border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all duration-300">
+      <motion.div
+        initial={isHomePage ? { y: -100, opacity: 0 } : false}
+        animate={
+          !isHomePage || isScrolled
+            ? { y: 0, opacity: 1, pointerEvents: "auto" }
+            : { y: -100, opacity: 0, pointerEvents: "none" }
+        }
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className={
+          isHomePage
+            ? "fixed top-3 left-0 right-0 z-50 mx-4 md:mx-auto max-w-5xl"
+            : "sticky top-3 z-50 mx-4 md:mx-auto max-w-5xl"
+        }
+      >
+        <header className="relative bg-white/85 dark:bg-zinc-950/80 backdrop-blur-xl rounded-full border border-slate-200/90 dark:border-zinc-800/80 shadow-lg shadow-black/5 dark:shadow-2xl dark:shadow-black/50 hover:border-amber-500/30 transition-all duration-300">
+          {/* Thin light along the top edge of the pill from floating glassmorphic navbar */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"
+          />
+
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
@@ -122,27 +162,48 @@ export function Navbar() {
                 </Link>
               </div>
 
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex space-x-1 relative">
+              {/* Desktop Navigation with Morphing Pill Indicator */}
+              <nav
+                className="hidden md:flex items-center space-x-1 relative"
+                onPointerLeave={() => setHoveredLink(null)}
+              >
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
+                  const isHighlighted = (hoveredLink ?? pathname) === link.href;
+
                   return (
                     <Link
                       key={link.name}
                       href={link.href}
-                      className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand-blue"
+                      onPointerEnter={(e) =>
+                        e.pointerType === "mouse" && setHoveredLink(link.href)
+                      }
+                      onFocus={() => setHoveredLink(link.href)}
+                      onBlur={() => setHoveredLink(null)}
+                      className="relative isolate flex items-center rounded-full px-4 py-2 text-sm font-medium outline-none transition-colors duration-200"
                     >
+                      {/* Morphing Pill Indicator */}
+                      {isHighlighted && (
+                        <motion.span
+                          layoutId="navbar-morph-pill"
+                          aria-hidden="true"
+                          transition={SPRING}
+                          className="absolute inset-0 -z-10 rounded-full bg-amber-500/15 border border-amber-500/30"
+                        />
+                      )}
                       <span
-                        className={`relative z-10 ${isActive ? "text-brand-blue font-semibold" : "text-foreground/80"
-                          }`}
+                        className={`relative z-10 transition-colors ${
+                          isHighlighted
+                            ? "text-slate-900 dark:text-white font-semibold"
+                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+                        }`}
                       >
                         {link.name}
                       </span>
                       {isActive && (
-                        <motion.div
-                          layoutId="navbar-pill"
-                          className="absolute inset-0 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-full z-0"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        <span
+                          aria-hidden="true"
+                          className="ml-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400"
                         />
                       )}
                     </Link>
@@ -182,32 +243,50 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* Mobile menu button */}
+              {/* Mobile menu morphing button */}
               <div className="flex items-center md:hidden">
-                <Button
-                  variant="ghost"
-                  className="h-9 w-9 p-0 rounded-full"
+                <button
+                  type="button"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label="Main menu"
+                  aria-expanded={isMobileMenuOpen}
+                  aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-300 outline-none hover:bg-zinc-800/80 transition-colors"
                 >
-                  {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                </Button>
+                  <span aria-hidden="true" className="relative block h-3.5 w-5">
+                    <span
+                      className={`absolute left-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
+                        isMobileMenuOpen ? "top-1.5 rotate-45" : "top-0"
+                      }`}
+                    />
+                    <span
+                      className={`absolute left-0 top-1.5 block h-0.5 w-5 rounded-full bg-current transition-all duration-200 ${
+                        isMobileMenuOpen ? "scale-x-0 opacity-0" : "opacity-100"
+                      }`}
+                    />
+                    <span
+                      className={`absolute left-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
+                        isMobileMenuOpen ? "top-1.5 -rotate-45" : "top-3"
+                      }`}
+                    />
+                  </span>
+                </button>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Mobile menu */}
+        {/* Mobile menu with morphing spring transition */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              initial={{ opacity: 0, y: -10, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="absolute top-[68px] left-0 right-0 md:hidden bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden z-50"
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={SPRING}
+              style={{ transformOrigin: "top center" }}
+              className="absolute top-[68px] left-0 right-0 md:hidden bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-zinc-800/80 shadow-2xl overflow-hidden z-50 p-4"
             >
-              <div className="flex flex-col gap-4 p-6">
+              <div className="flex flex-col gap-2 p-2">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
                   return (
@@ -265,7 +344,7 @@ export function Navbar() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </>

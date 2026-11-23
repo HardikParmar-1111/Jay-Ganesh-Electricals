@@ -56,11 +56,17 @@ export default async function AdminDashboardPage() {
     }
   };
 
+  // Start of today in UTC
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
   // Run aggregate count queries in parallel
   const [
     { count: totalLeads },
     { count: activeProjects },
     { count: catalogCount },
+    { count: totalVisits },
+    { count: todayVisits },
     leadsData,
     { data: catalogData },
   ] = await Promise.all([
@@ -73,6 +79,13 @@ export default async function AdminDashboardPage() {
     supabase
       .from("catalog_items")
       .select("*", { count: "exact", head: true }),
+    supabase
+      .from("site_visits")
+      .select("*", { count: "exact", head: true }),
+    supabase
+      .from("site_visits")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", todayStart.toISOString()),
     fetchLeads(),
     supabase
       .from("catalog_items")
@@ -90,6 +103,8 @@ export default async function AdminDashboardPage() {
         totalLeads: totalLeads || (leadsData?.length ?? 0),
         activeProjects: activeProjects || 0,
         catalogCount: catalogCount || (catalogData?.length ?? 0),
+        totalVisits: totalVisits || 0,
+        todayVisits: todayVisits || 0,
       }}
       initialLeads={(leadsData as any) || []}
       initialCatalogItems={(catalogData as any) || []}

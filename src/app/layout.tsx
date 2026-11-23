@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SplashScreen } from "@/components/SplashScreen";
+import { VisitorTracker } from "@/components/VisitorTracker";
 
 export default function RootLayout({
   children,
@@ -33,9 +34,18 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${rubik.variable} ${nunitoSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SplashScreen duration={2500}>
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300 relative">
+        {/* Subtle Atmospheric Lighting Background (From Agency Reference Image) */}
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+          <div className="hidden dark:block absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[450px] bg-white/[0.035] rounded-full blur-[140px]" />
+          <div className="hidden dark:block absolute top-[25%] left-[-15%] w-[50vw] h-[700px] bg-blue-900/[0.13] rounded-full blur-[160px]" />
+          <div className="hidden dark:block absolute top-[35%] right-[-15%] w-[50vw] h-[700px] bg-amber-800/[0.10] rounded-full blur-[160px]" />
+          <div className="hidden dark:block absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[90vw] h-[600px] bg-slate-900/[0.25] rounded-full blur-[180px]" />
+        </div>
+
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <VisitorTracker />
+          <SplashScreen duration={1300}>
             <Navbar />
             <main className="flex-1 flex flex-col">
               {children}

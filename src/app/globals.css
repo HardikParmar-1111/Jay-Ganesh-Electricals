@@ -4,6 +4,14 @@
   --background: #fafafa; /* zinc-50 (off-white Apple style) */
   --foreground: #18181b; /* zinc-900 */
   
+  /* Semantic & Chart Colors for Lighting components */
+  --color-chart-1: #d97706;
+  --color-chart-3: #f59e0b;
+  --color-chart-4: #fbbf24;
+  --color-muted-foreground: #71717a;
+  --color-border: #e4e4e7;
+  --color-card: #ffffff;
+  
   /* UI UX Pro Max - Glassmorphism Variables */
   --blur-amount: 15px;
   --glass-opacity: 0.75;
@@ -13,6 +21,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  --color-card: var(--color-card);
   
   /* Brand Colors */
   --color-brand-gold: #D4A843;
@@ -29,8 +40,16 @@
 }
 
 :root.dark {
-  --background: #09090b; /* zinc-950 */
+  --background: #08080a; /* Obsidian black from agency hero */
   --foreground: #fafafa; /* zinc-50 */
+  
+  /* Semantic & Chart Colors for Dark Mode */
+  --color-chart-1: #fbbf24;
+  --color-chart-3: #f59e0b;
+  --color-chart-4: #d97706;
+  --color-muted-foreground: #a1a1aa;
+  --color-border: #27272a;
+  --color-card: #141417;
   
   /* Dark mode glass adjustments */
   --glass-opacity: 0.8;
@@ -45,6 +64,17 @@ body {
   font-family: var(--font-body), sans-serif;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Atmospheric agency hero lighting background */
+:root.dark body {
+  background-color: #08080a;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% -10%, rgba(255, 255, 255, 0.045), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 0% 35%, rgba(29, 78, 216, 0.12), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 100% 40%, rgba(217, 119, 6, 0.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(30, 41, 59, 0.20), transparent 70%);
+  background-attachment: fixed;
 }
 
 /* Glassmorphism utilities */

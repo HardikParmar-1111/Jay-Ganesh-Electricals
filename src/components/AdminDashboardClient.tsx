@@ -67,6 +67,8 @@ interface AdminDashboardClientProps {
     totalLeads: number;
     activeProjects: number;
     catalogCount: number;
+    totalVisits?: number;
+    todayVisits?: number;
   };
   initialLeads: AdminLead[];
   initialCatalogItems?: AdminCatalogItem[];
@@ -194,8 +196,31 @@ export function AdminDashboardClient({
           >
             {/* ANALYTICS TAB */}
             {activeTab === "analytics" && (
-              <div className="space-y-5">
+              <div className="space-y-6">
+                {/* Traffic Analytics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="p-5 border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent">
+                    <h4 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1">
+                      Today&apos;s Visitors
+                    </h4>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+                      {metrics.todayVisits ?? 0}
+                    </p>
+                    <Badge variant="brand" className="mt-2">
+                      Live daily traffic
+                    </Badge>
+                  </Card>
+
+                  <Card className="p-5 border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent">
+                    <h4 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
+                      Total Site Visits
+                    </h4>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+                      {metrics.totalVisits ?? 0}
+                    </p>
+                    <span className="text-xs text-zinc-400 block mt-2">All-time count</span>
+                  </Card>
+
                   <Card className="p-5">
                     <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
                       Total Inquiries & Leads
@@ -207,6 +232,7 @@ export function AdminDashboardClient({
                       Live from database
                     </Badge>
                   </Card>
+
                   <Card className="p-5">
                     <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
                       Active Projects
@@ -216,26 +242,6 @@ export function AdminDashboardClient({
                     </p>
                     <Badge variant="brand" className="mt-2">
                       Contracting Active
-                    </Badge>
-                  </Card>
-                  <Card className="p-5">
-                    <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
-                      Active Catalog Items
-                    </h4>
-                    <p className="text-3xl font-bold text-zinc-900 dark:text-white">
-                      {metrics.catalogCount}
-                    </p>
-                    <span className="text-xs text-zinc-400 block mt-2">Public catalog</span>
-                  </Card>
-                  <Card className="p-5">
-                    <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
-                      Pending Follow-up
-                    </h4>
-                    <p className="text-3xl font-bold text-amber-500">
-                      {leadsList.filter((l) => l.status === "new").length}
-                    </p>
-                    <Badge variant="neutral" className="mt-2">
-                      Requires inspection
                     </Badge>
                   </Card>
                 </div>
