@@ -40,7 +40,7 @@ export function ArchitecturalHero() {
   }, []);
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-zinc-950 select-none">
+    <section className="relative w-full h-[100svh] min-h-[560px] max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
       {/* ================================================================= */}
       {/* 1. DAYTIME VILLA LAYER (EXACT SAME HOUSE - ALL LIGHTS OFF) */}
       {/* ================================================================= */}
@@ -48,7 +48,7 @@ export function ArchitecturalHero() {
         <img
           src="/images/villa-day.jpg"
           alt="Jay Ganesh Architectural Villa - Daylight View"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-[center_38%] sm:object-center"
           loading="eager"
         />
       </div>
@@ -65,7 +65,7 @@ export function ArchitecturalHero() {
         <img
           src="/images/villa-night.jpg"
           alt="Jay Ganesh Architectural Villa - Night Illumination"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-[center_38%] sm:object-center"
           loading="eager"
         />
 
@@ -78,23 +78,23 @@ export function ArchitecturalHero() {
         />
       </motion.div>
 
-      {/* Soft Bottom Vignette for Smooth Transition into Catalog/Content Below */}
-      <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/40 via-transparent to-zinc-950 pointer-events-none" />
+      {/* Soft Bottom Vignette for Smooth Transition into Content Below */}
+      <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/45 via-transparent to-zinc-950 pointer-events-none" />
 
       {/* ================================================================= */}
-      {/* 3. CINEMATIC SHOP NAME IN SKY (VOLTRA AESTHETIC - ABOVE ROOFLINE) */}
+      {/* 3. CINEMATIC SHOP NAME IN SKY (MOBILE-RESPONSIVE VOLTRA AESTHETIC) */}
       {/* ================================================================= */}
-      <div className="relative z-30 w-full pt-16 sm:pt-20 md:pt-24 flex flex-col items-center text-center px-4 pointer-events-none">
+      <div className="relative z-30 w-full pt-20 sm:pt-24 md:pt-28 flex flex-col items-center text-center px-4 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center"
+          className="flex flex-col items-center max-w-full"
         >
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-[0.2em] uppercase leading-tight text-white/95 drop-shadow-[0_12px_35px_rgba(0,0,0,0.9)] font-heading">
+          <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-[0.14em] sm:tracking-[0.2em] uppercase leading-tight text-white/95 drop-shadow-[0_12px_35px_rgba(0,0,0,0.9)] font-heading">
             Jay Ganesh
           </h1>
-          <p className="mt-2 text-xs sm:text-sm md:text-base font-semibold tracking-[0.38em] text-zinc-300 uppercase drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+          <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs md:text-sm font-semibold tracking-[0.22em] sm:tracking-[0.38em] text-zinc-300 uppercase drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
             Architectural Electrification
           </p>
         </motion.div>

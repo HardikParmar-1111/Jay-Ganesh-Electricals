@@ -74,7 +74,12 @@ body {
     radial-gradient(ellipse 55% 45% at 0% 35%, rgba(29, 78, 216, 0.12), transparent 60%),
     radial-gradient(ellipse 55% 45% at 100% 40%, rgba(217, 119, 6, 0.10), transparent 60%),
     radial-gradient(ellipse 70% 50% at 50% 100%, rgba(30, 41, 59, 0.20), transparent 70%);
-  background-attachment: fixed;
+}
+
+@media (min-width: 768px) {
+  :root.dark body {
+    background-attachment: fixed;
+  }
 }
 
 /* Glassmorphism utilities */
