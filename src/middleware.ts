@@ -92,23 +92,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // --------------------------------------------------------------------------
-  // 2. Smart Login Redirects:
-  // IF a user is successfully authenticated AND they visit the root page ('/'),
-  // intercept them and redirect based on their database role:
-  //   - Role === 'admin' -> Redirect to /admin/dashboard
-  //   - Role === 'customer' -> Redirect to /customer/dashboard
-  // --------------------------------------------------------------------------
-  if (pathname === '/') {
-    const destination = role === 'admin' ? '/admin/dashboard' : '/customer/dashboard'
-    const redirectResponse = NextResponse.redirect(new URL(destination, request.url))
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
-    })
-    return redirectResponse
-  }
-
-  // --------------------------------------------------------------------------
-  // 3. Protected Route Guards:
+  // 2. Protected Route Guards:
   // IF an authenticated Customer attempts to access /admin/..., redirect back to /customer/dashboard
   // --------------------------------------------------------------------------
   if (pathname.startsWith('/admin') && role !== 'admin') {

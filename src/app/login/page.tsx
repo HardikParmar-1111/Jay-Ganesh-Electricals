@@ -38,7 +38,7 @@ export default function LoginPage() {
           return;
         }
 
-        let targetPath = "/catalog";
+        let targetPath = "/";
         try {
           if (data?.user) {
             const { data: profile } = await supabase
@@ -52,7 +52,7 @@ export default function LoginPage() {
             }
           }
         } catch {
-          targetPath = "/catalog";
+          targetPath = "/";
         }
 
         await login(formData).catch(() => {});

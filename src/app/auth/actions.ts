@@ -42,7 +42,7 @@ export async function login(
   }
 
   // Retrieve user role from profiles table
-  let targetRoute = '/catalog'
+  let targetRoute = '/'
   try {
     const { data: profile } = await supabase
       .from('profiles')
@@ -54,7 +54,7 @@ export async function login(
       targetRoute = '/admin/dashboard'
     }
   } catch {
-    targetRoute = '/catalog'
+    targetRoute = '/'
   }
 
   revalidatePath('/', 'layout')
@@ -103,7 +103,7 @@ export async function signup(
   // If email confirmation is disabled and session is active immediately
   if (data?.session) {
     revalidatePath('/', 'layout')
-    redirect('/catalog')
+    redirect('/')
   }
 
   return {

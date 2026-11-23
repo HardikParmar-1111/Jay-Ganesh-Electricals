@@ -2,35 +2,55 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 export function ArchitecturalHero() {
-  // Starts in daytime (lights OFF), then smoothly animates to night (lights ON) in full view
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isNight, setIsNight] = useState(false);
 
   useEffect(() => {
-    // 1. Always reset to Day mode on mount or refresh
-    setIsNight(false);
+    setMounted(true);
+  }, []);
 
+  const currentTheme = resolvedTheme || theme || "dark";
+  const isDark = currentTheme === "dark";
+
+  // Direct sync with website Theme Toggle (when user toggles light/dark mode)
+  useEffect(() => {
+    if (!mounted) return;
+    setIsNight(isDark);
+  }, [isDark, mounted]);
+
+  // Initial cinematic Day-to-Night transition (matching the reference video)
+  useEffect(() => {
+    if (!isDark) {
+      setIsNight(false);
+      return;
+    }
+
+    // Always start at daylight view first
+    setIsNight(false);
     let transitionTimer: NodeJS.Timeout;
 
-    const triggerDayToNightAnimation = () => {
-      // Pause for 1000ms so the visitor clearly registers the clean daylight view like in the reference video
+    const startTransition = () => {
+      // Hold for 700ms so visitor clearly sees the daylight villa before lights turn on
       transitionTimer = setTimeout(() => {
         setIsNight(true);
-      }, 1000);
+      }, 700);
     };
 
-    // 2. Start animation when the starting splash screen has finished revealing the page
     const handleSplashDone = () => {
-      triggerDayToNightAnimation();
+      startTransition();
     };
 
     window.addEventListener("splash_screen_completed", handleSplashDone);
 
-    // Fallback: If no splash screen (e.g. fast load or client navigation), start after 2.4s
+    // Fallback if splash screen is completed or bypassed
     const fallbackTimer = setTimeout(() => {
       setIsNight(true);
-    }, 2400);
+    }, 1600);
 
     return () => {
       window.removeEventListener("splash_screen_completed", handleSplashDone);
@@ -39,33 +59,42 @@ export function ArchitecturalHero() {
     };
   }, []);
 
+  // Quick interactive toggle to manually switch between daylight and nighttime lighting
+  const toggleLighting = () => {
+    const nextState = !isNight;
+    setIsNight(nextState);
+    if (setTheme) {
+      setTheme(nextState ? "dark" : "light");
+    }
+  };
+
   return (
-    <section className="relative w-full h-[100svh] min-h-[560px] max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
+    <section className="relative w-full h-[62svh] min-h-[460px] max-h-[580px] sm:h-[100svh] sm:min-h-[580px] sm:max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
       {/* ================================================================= */}
-      {/* 1. DAYTIME VILLA LAYER (EXACT SAME HOUSE - ALL LIGHTS OFF) */}
+      {/* 1. DAYTIME VILLA LAYER (ALL LIGHTS OFF - FULL FACADE VISIBLE)    */}
       {/* ================================================================= */}
       <div className="absolute inset-0 z-0">
         <img
           src="/images/villa-day.jpg"
           alt="Jay Ganesh Architectural Villa - Daylight View"
-          className="w-full h-full object-cover object-[center_38%] sm:object-center"
+          className="w-full h-full object-cover object-[50%_40%] sm:object-center"
           loading="eager"
         />
       </div>
 
       {/* ================================================================= */}
-      {/* 2. NIGHTTIME ILLUMINATED VILLA LAYER (EXACT SAME HOUSE - LIGHTS ON) */}
+      {/* 2. NIGHTTIME ILLUMINATED VILLA LAYER (WARM LIGHTS ON)             */}
       {/* ================================================================= */}
       <motion.div
         className="absolute inset-0 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: isNight ? 1 : 0 }}
-        transition={{ duration: 4.8, ease: [0.33, 1, 0.68, 1] }}
+        transition={{ duration: 4.2, ease: [0.33, 1, 0.68, 1] }}
       >
         <img
           src="/images/villa-night.jpg"
           alt="Jay Ganesh Architectural Villa - Night Illumination"
-          className="w-full h-full object-cover object-[center_38%] sm:object-center"
+          className="w-full h-full object-cover object-[50%_40%] sm:object-center"
           loading="eager"
         />
 
@@ -73,7 +102,7 @@ export function ArchitecturalHero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isNight ? 0.45 : 0 }}
-          transition={{ duration: 4.8, ease: "easeInOut" }}
+          transition={{ duration: 4.2, ease: "easeInOut" }}
           className="absolute inset-0 bg-gradient-to-t from-amber-500/15 via-transparent to-transparent pointer-events-none"
         />
       </motion.div>
@@ -82,9 +111,9 @@ export function ArchitecturalHero() {
       <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/45 via-transparent to-zinc-950 pointer-events-none" />
 
       {/* ================================================================= */}
-      {/* 3. CINEMATIC SHOP NAME IN SKY (MOBILE-RESPONSIVE VOLTRA AESTHETIC) */}
+      {/* 3. CINEMATIC SHOP NAME IN SKY (MOBILE OPTIMIZED TYPOGRAPHY)       */}
       {/* ================================================================= */}
-      <div className="relative z-30 w-full pt-20 sm:pt-24 md:pt-28 flex flex-col items-center text-center px-4 pointer-events-none">
+      <div className="relative z-30 w-full pt-16 sm:pt-24 md:pt-28 flex flex-col items-center text-center px-4 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,19 +129,30 @@ export function ArchitecturalHero() {
         </motion.div>
       </div>
 
-      {/* Subtle Scroll Indicator at Bottom */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-1.5"
+      {/* ================================================================= */}
+      {/* 4. INTERACTIVE LIGHTING CONTROLLER PILL                           */}
+      {/* ================================================================= */}
+      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleLighting}
+          className="group inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 hover:border-amber-400/50 text-white text-xs font-semibold shadow-lg shadow-black/50 transition-all duration-300 cursor-pointer select-none active:scale-95"
+          aria-label={isNight ? "Switch villa to daylight mode" : "Switch villa to architectural illumination"}
         >
-          <span className="text-[10px] tracking-[0.25em] uppercase text-zinc-400 font-medium">
-            Scroll to explore
-          </span>
-          <div className="w-1 h-5 rounded-full bg-gradient-to-b from-white/60 to-transparent" />
-        </motion.div>
+          {isNight ? (
+            <>
+              <Moon size={13} className="text-amber-400 animate-pulse" />
+              <span className="text-[11px] sm:text-xs font-medium">Night Lighting ON</span>
+              <span className="text-[10px] text-zinc-400 border-l border-white/20 pl-1.5">Tap for Day</span>
+            </>
+          ) : (
+            <>
+              <Sun size={13} className="text-amber-300" />
+              <span className="text-[11px] sm:text-xs font-medium">Daylight View</span>
+              <span className="text-[10px] text-zinc-400 border-l border-white/20 pl-1.5">Tap for Lights</span>
+            </>
+          )}
+        </button>
       </div>
     </section>
   );

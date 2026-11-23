@@ -44,7 +44,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
 
-        let targetPath = "/catalog";
+        let targetPath = "/";
         try {
           if (data?.user) {
             const { data: profile } = await supabase
@@ -58,7 +58,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             }
           }
         } catch {
-          targetPath = "/catalog";
+          targetPath = "/";
         }
 
         // Also sync server action / cookies if available

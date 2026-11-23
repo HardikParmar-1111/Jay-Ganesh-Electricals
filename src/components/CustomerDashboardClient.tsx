@@ -313,9 +313,9 @@ export function CustomerDashboardClient({
                     <p className="text-sm mb-5 text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
                       Save your preferred switches, switchgears, and wiring components while browsing the catalog.
                     </p>
-                    <Link href="/catalog">
+                    <Link href="/#materials">
                       <Button variant="primary" size="sm">
-                        Browse Catalog
+                        Browse Materials
                       </Button>
                     </Link>
                   </Card>
@@ -379,7 +379,7 @@ export function CustomerDashboardClient({
                       );
                     })}
 
-                    <Link href="/catalog" className="h-full min-h-[220px]">
+                    <Link href="/#materials" className="h-full min-h-[220px]">
                       <Card
                         interactive
                         className="h-full border-dashed border-2 border-slate-300 dark:border-slate-700 bg-transparent flex flex-col items-center justify-center text-slate-500 hover:text-brand-gold hover:border-brand-gold p-6 rounded-2xl"
