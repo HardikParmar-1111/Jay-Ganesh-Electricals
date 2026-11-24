@@ -49,7 +49,7 @@ export default function RootLayout({
 
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <VisitorTracker />
-          <SplashScreen duration={1300}>
+          <SplashScreen duration={1600}>
             <Navbar />
             <main className="flex-1 flex flex-col">
               {children}

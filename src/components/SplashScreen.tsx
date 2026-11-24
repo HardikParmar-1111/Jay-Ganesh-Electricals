@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface SplashScreenProps {
   children?: React.ReactNode;
-  /** Splash screen display duration in milliseconds (default: 1300ms) */
+  /** Splash screen display duration in milliseconds (default: 1600ms / 1.6s) */
   duration?: number;
   /** Whether to show the splash screen only once per browser session */
   oncePerSession?: boolean;
@@ -13,7 +13,7 @@ interface SplashScreenProps {
 
 export function SplashScreen({
   children,
-  duration = 1300,
+  duration = 1600,
   oncePerSession = false,
 }: SplashScreenProps) {
   const [mounted, setMounted] = useState(false);
