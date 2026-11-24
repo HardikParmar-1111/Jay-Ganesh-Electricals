@@ -1,123 +1,221 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sun,
+  Moon,
+  Volume2,
+  VolumeX,
+  SunMedium,
+  Sliders,
+  ArrowLeft,
+} from "lucide-react";
+import { Logo } from "./ui/Logo";
+
+// Web Audio API synthetic switch click sound (zero network dependency)
+function playMechanicalClick(isMuted: boolean, type: "on" | "off" = "on") {
+  if (isMuted || typeof window === "undefined") return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(type === "on" ? 2200 : 1800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.025);
+
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(type === "on" ? 2400 : 1600, ctx.currentTime);
+    filter.Q.setValueAtTime(2.5, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.025);
+
+    // Low mechanical contact thump
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = "sine";
+    subOsc.frequency.setValueAtTime(type === "on" ? 220 : 180, ctx.currentTime);
+    subOsc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.035);
+
+    subGain.gain.setValueAtTime(0.4, ctx.currentTime);
+    subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+
+    subOsc.start();
+    subOsc.stop(ctx.currentTime + 0.035);
+  } catch {
+    // Ignore audio context exceptions before user interaction
+  }
+}
 
 export function ArchitecturalHero() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  // Starts in daytime (lights OFF), then smoothly animates to night (lights ON) in full view
   const [isNight, setIsNight] = useState(false);
 
+  // Room Simulator State
+  const [isSimulatorActive, setIsSimulatorActive] = useState(false);
+  const [roomDayMode, setRoomDayMode] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Electrical Hardware Controls inside the Room
+  const [downlightsOn, setDownlightsOn] = useState(true);
+  const [coveOn, setCoveOn] = useState(true);
+  const [flashDownlights, setFlashDownlights] = useState(false);
+
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const currentTheme = resolvedTheme || theme || "dark";
-  const isDark = currentTheme === "dark";
-
-  // Direct sync with website Theme Toggle (when user toggles light/dark mode)
-  useEffect(() => {
-    if (!mounted) return;
-    setIsNight(isDark);
-  }, [isDark, mounted]);
-
-  // Initial cinematic Day-to-Night transition (matching the reference video)
-  useEffect(() => {
-    if (!isDark) {
-      setIsNight(false);
-      return;
-    }
-
-    // Always start at daylight view first
+    // 1. Always reset to Day mode on mount or refresh
     setIsNight(false);
+
     let transitionTimer: NodeJS.Timeout;
 
-    const startTransition = () => {
-      // Hold for 700ms so visitor clearly sees the daylight villa before lights turn on
+    const triggerDayToNightAnimation = () => {
       transitionTimer = setTimeout(() => {
         setIsNight(true);
-      }, 700);
+      }, 1000);
     };
 
     const handleSplashDone = () => {
-      startTransition();
+      triggerDayToNightAnimation();
     };
 
     window.addEventListener("splash_screen_completed", handleSplashDone);
 
-    // Fallback if splash screen is completed or bypassed
     const fallbackTimer = setTimeout(() => {
       setIsNight(true);
-    }, 1600);
+    }, 2400);
+
+    // Listen for custom event from Navbar to open simulator directly from hero
+    const handleOpenSimulator = () => {
+      setIsNight(true); // ensure villa lights are on
+      setIsSimulatorActive(true);
+    };
+
+    window.addEventListener("open_room_simulator", handleOpenSimulator);
+
+    // Check query params if navigated via /?simulator=true
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("simulator") === "true") {
+        setIsNight(true);
+        setIsSimulatorActive(true);
+      }
+    }
 
     return () => {
       window.removeEventListener("splash_screen_completed", handleSplashDone);
+      window.removeEventListener("open_room_simulator", handleOpenSimulator);
       clearTimeout(transitionTimer);
       clearTimeout(fallbackTimer);
     };
   }, []);
 
-  // Quick interactive toggle to manually switch between daylight and nighttime lighting
-  const toggleLighting = () => {
-    const nextState = !isNight;
-    setIsNight(nextState);
-    if (setTheme) {
-      setTheme(nextState ? "dark" : "light");
+  const toggleDownlights = () => {
+    const nextVal = !downlightsOn;
+    playMechanicalClick(isMuted, nextVal ? "on" : "off");
+    setDownlightsOn(nextVal);
+    if (nextVal) {
+      setFlashDownlights(true);
+      setTimeout(() => setFlashDownlights(false), 70);
+    }
+  };
+
+  const toggleCove = () => {
+    playMechanicalClick(isMuted, !coveOn ? "on" : "off");
+    setCoveOn(!coveOn);
+  };
+
+  const exitSimulator = () => {
+    playMechanicalClick(isMuted, "off");
+    setIsSimulatorActive(false);
+    if (typeof window !== "undefined" && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("simulator");
+      window.history.replaceState({}, "", url.pathname);
     }
   };
 
   return (
-    <section className="relative w-full h-[62svh] min-h-[460px] max-h-[580px] sm:h-[100svh] sm:min-h-[580px] sm:max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
+    <section className="relative w-full h-[100svh] min-h-[560px] max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
       {/* ================================================================= */}
-      {/* 1. DAYTIME VILLA LAYER (ALL LIGHTS OFF - FULL FACADE VISIBLE)    */}
-      {/* ================================================================= */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src="/images/villa-day.jpg"
-          alt="Jay Ganesh Architectural Villa - Daylight View"
-          className="w-full h-full object-cover object-[50%_40%] sm:object-center"
-          loading="eager"
-        />
-      </div>
-
-      {/* ================================================================= */}
-      {/* 2. NIGHTTIME ILLUMINATED VILLA LAYER (WARM LIGHTS ON)             */}
+      {/* 1. EXTERIOR VILLA CAMERA CONTAINER (SMOOTH ZOOM-IN GLIDE)        */}
       {/* ================================================================= */}
       <motion.div
-        className="absolute inset-0 z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isNight ? 1 : 0 }}
-        transition={{ duration: 4.2, ease: [0.33, 1, 0.68, 1] }}
+        className="absolute inset-0 z-0 origin-center"
+        animate={{
+          scale: isSimulatorActive ? 3.5 : 1,
+          x: isSimulatorActive ? "-6%" : "0%",
+          y: isSimulatorActive ? "-16%" : "0%", // Focus on 1st-floor glowing glass facade
+        }}
+        transition={{
+          duration: isSimulatorActive ? 2.4 : 1.6,
+          ease: [0.22, 1, 0.36, 1],
+        }}
       >
-        <img
-          src="/images/villa-night.jpg"
-          alt="Jay Ganesh Architectural Villa - Night Illumination"
-          className="w-full h-full object-cover object-[50%_40%] sm:object-center"
-          loading="eager"
-        />
+        {/* DAYTIME VILLA LAYER */}
+        <div className="absolute inset-0">
+          <img
+            src="/images/villa-day.jpg"
+            alt="Jay Ganesh Architectural Villa - Daylight View"
+            className="w-full h-full object-cover object-[center_38%] sm:object-center"
+            loading="eager"
+          />
+        </div>
 
-        {/* Ambient Warm Architectural Light Glow Layer */}
+        {/* NIGHTTIME ILLUMINATED VILLA LAYER */}
         <motion.div
+          className="absolute inset-0"
           initial={{ opacity: 0 }}
-          animate={{ opacity: isNight ? 0.45 : 0 }}
-          transition={{ duration: 4.2, ease: "easeInOut" }}
-          className="absolute inset-0 bg-gradient-to-t from-amber-500/15 via-transparent to-transparent pointer-events-none"
-        />
+          animate={{ opacity: isNight ? 1 : 0 }}
+          transition={{ duration: 4.8, ease: [0.33, 1, 0.68, 1] }}
+        >
+          <img
+            src="/images/villa-night.jpg"
+            alt="Jay Ganesh Architectural Villa - Night Illumination"
+            className="w-full h-full object-cover object-[center_38%] sm:object-center"
+            loading="eager"
+          />
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isNight ? 0.45 : 0 }}
+            transition={{ duration: 4.8, ease: "easeInOut" }}
+            className="absolute inset-0 bg-gradient-to-t from-amber-500/15 via-transparent to-transparent pointer-events-none"
+          />
+        </motion.div>
       </motion.div>
 
       {/* Soft Bottom Vignette for Smooth Transition into Content Below */}
       <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/45 via-transparent to-zinc-950 pointer-events-none" />
 
       {/* ================================================================= */}
-      {/* 3. CINEMATIC SHOP NAME IN SKY (MOBILE OPTIMIZED TYPOGRAPHY)       */}
+      {/* 2. CINEMATIC SHOP NAME IN SKY (Fades Out on Simulator Zoom)      */}
       {/* ================================================================= */}
-      <div className="relative z-30 w-full pt-16 sm:pt-24 md:pt-28 flex flex-col items-center text-center px-4 pointer-events-none">
+      <div className="relative z-30 w-full pt-20 sm:pt-24 md:pt-28 flex flex-col items-center text-center px-4 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          animate={{
+            opacity: isSimulatorActive ? 0 : 1,
+            y: isSimulatorActive ? -30 : 0,
+          }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
           className="flex flex-col items-center max-w-full"
         >
           <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-[0.14em] sm:tracking-[0.2em] uppercase leading-tight text-white/95 drop-shadow-[0_12px_35px_rgba(0,0,0,0.9)] font-heading">
@@ -129,31 +227,226 @@ export function ArchitecturalHero() {
         </motion.div>
       </div>
 
+      {/* Subtle Scroll Indicator at Bottom (Hidden when simulator is active) */}
+      {!isSimulatorActive && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.3, 0.8, 0.3] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="flex flex-col items-center gap-1.5"
+          >
+            <span className="text-[10px] tracking-[0.25em] uppercase text-zinc-400 font-medium">
+              Scroll to explore
+            </span>
+            <div className="w-1 h-5 rounded-full bg-gradient-to-b from-white/60 to-transparent" />
+          </motion.div>
+        </div>
+      )}
+
       {/* ================================================================= */}
-      {/* 4. INTERACTIVE LIGHTING CONTROLLER PILL                           */}
+      {/* 3. LUXURY FIRST-FLOOR LIVING ROOM INTERIOR VIEW                  */}
+      {/* Uses the authentic original image with original ceiling fan       */}
       {/* ================================================================= */}
-      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={toggleLighting}
-          className="group inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 hover:border-amber-400/50 text-white text-xs font-semibold shadow-lg shadow-black/50 transition-all duration-300 cursor-pointer select-none active:scale-95"
-          aria-label={isNight ? "Switch villa to daylight mode" : "Switch villa to architectural illumination"}
-        >
-          {isNight ? (
-            <>
-              <Moon size={13} className="text-amber-400 animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-medium">Night Lighting ON</span>
-              <span className="text-[10px] text-zinc-400 border-l border-white/20 pl-1.5">Tap for Day</span>
-            </>
-          ) : (
-            <>
-              <Sun size={13} className="text-amber-300" />
-              <span className="text-[11px] sm:text-xs font-medium">Daylight View</span>
-              <span className="text-[10px] text-zinc-400 border-l border-white/20 pl-1.5">Tap for Lights</span>
-            </>
-          )}
-        </button>
-      </div>
+      <AnimatePresence>
+        {isSimulatorActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 1.1, duration: 1.0, ease: "easeInOut" }}
+            className="absolute inset-0 z-40 overflow-hidden bg-black"
+          >
+            {/* Authentic Room Interior Image with Original Ceiling Fan Intact (No spins) */}
+            <div className="absolute inset-0 pointer-events-none">
+              <Image
+                src={
+                  roomDayMode
+                    ? "/images/room/villa-interior-day.jpg"
+                    : "/images/room/villa-interior-night.jpg"
+                }
+                alt="Villa First-Floor Luxury Living Room Interior"
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center"
+              />
+            </div>
+
+            {/* Night Room Dimming when lights are turned off */}
+            {!roomDayMode && (
+              <div
+                className="absolute inset-0 bg-zinc-950 pointer-events-none transition-opacity duration-700 ease-out"
+                style={{
+                  opacity: !downlightsOn && !coveOn ? 0.72 : 0,
+                }}
+              />
+            )}
+
+            {/* Linear Drop-Ceiling Cove Lighting Glow */}
+            <div
+              className="absolute top-0 inset-x-0 h-[26%] pointer-events-none transition-opacity duration-400 ease-out"
+              style={{
+                opacity: coveOn ? 0.9 : 0,
+              }}
+            >
+              <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-amber-300 via-amber-400/80 to-transparent blur-[2px]" />
+              <div className="absolute top-0 inset-x-0 h-full bg-gradient-to-b from-amber-400/35 via-amber-500/15 to-transparent blur-xl mix-blend-screen" />
+            </div>
+
+            {/* Recessed COB Downlights Cones */}
+            <div
+              className="absolute inset-0 pointer-events-none transition-opacity duration-300 ease-out"
+              style={{
+                opacity: downlightsOn ? 1 : 0,
+              }}
+            >
+              {flashDownlights && (
+                <div className="absolute inset-0 bg-amber-100/35 mix-blend-screen pointer-events-none" />
+              )}
+              {/* Spot 1 */}
+              <div className="absolute top-[8%] left-[22%] -translate-x-1/2 flex flex-col items-center">
+                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
+                <div
+                  className="w-56 sm:w-96 h-80 sm:h-[420px] -mt-1 bg-gradient-to-b from-amber-300/50 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
+                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
+                />
+              </div>
+              {/* Spot 2 */}
+              <div className="absolute top-[7%] left-[62%] -translate-x-1/2 flex flex-col items-center">
+                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
+                <div
+                  className="w-56 sm:w-96 h-80 sm:h-[420px] -mt-1 bg-gradient-to-b from-amber-300/50 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
+                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
+                />
+              </div>
+              {/* Spot 3 */}
+              <div className="absolute top-[8%] left-[82%] -translate-x-1/2 flex flex-col items-center">
+                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
+                <div
+                  className="w-48 sm:w-80 h-72 sm:h-96 -mt-1 bg-gradient-to-b from-amber-300/45 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
+                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
+                />
+              </div>
+              {/* Warm Floor Reflection */}
+              <div className="absolute bottom-[2%] inset-x-[15%] h-[32%] bg-gradient-to-t from-amber-500/20 via-amber-400/10 to-transparent blur-2xl mix-blend-screen pointer-events-none" />
+            </div>
+
+            {/* ================================================================= */}
+            {/* 4. NAVBAR OF SIMULATOR IN FOOTER (FLOATING BOTTOM PILL)           */}
+            {/* Matches our exact navbar design, positioned as a footer dock      */}
+            {/* ================================================================= */}
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed bottom-4 sm:bottom-6 left-0 right-0 z-50 mx-4 md:mx-auto max-w-4xl"
+            >
+              <header className="relative bg-white/90 dark:bg-zinc-950/85 backdrop-blur-xl rounded-full border border-slate-200/90 dark:border-zinc-800/80 shadow-2xl shadow-black/40 dark:shadow-black/70 hover:border-amber-500/30 transition-all duration-300">
+                {/* Thin amber light along top edge */}
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent"
+                />
+
+                <div className="px-3 sm:px-6">
+                  <div className="flex justify-between items-center h-14 sm:h-16">
+                    {/* Left: Brand Logo & Room Simulator Subtitle */}
+                    <div className="flex-shrink-0 flex items-center">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Logo size={32} className="transition-transform sm:w-9 sm:h-9" />
+                        <div className="hidden sm:flex flex-col">
+                          <span className="font-heading font-bold text-xs sm:text-base leading-tight text-slate-900 dark:text-white">
+                            Jay Ganesh
+                          </span>
+                          <span className="text-[9px] sm:text-[10px] tracking-wider uppercase text-brand-gold font-semibold -mt-0.5">
+                            Room Simulator
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Center: Controls matching our navbar design */}
+                    <nav className="flex items-center space-x-1 sm:space-x-2">
+                      {/* Downlights Toggle */}
+                      <button
+                        onClick={toggleDownlights}
+                        className={`relative isolate flex items-center rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium outline-none transition-all duration-200 ${
+                          downlightsOn
+                            ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-semibold shadow-sm"
+                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+                        }`}
+                        title="Toggle 3000K Architectural Downlights"
+                      >
+                        <SunMedium size={14} className="sm:mr-1.5 shrink-0" />
+                        <span className="hidden xs:inline sm:inline">Downlights</span>
+                        {downlightsOn && (
+                          <span className="ml-1 sm:ml-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+                        )}
+                      </button>
+
+                      {/* Cove Lighting Toggle */}
+                      <button
+                        onClick={toggleCove}
+                        className={`relative isolate flex items-center rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium outline-none transition-all duration-200 ${
+                          coveOn
+                            ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-semibold shadow-sm"
+                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+                        }`}
+                        title="Toggle Drop-Ceiling Cove Strip"
+                      >
+                        <Sliders size={14} className="sm:mr-1.5 shrink-0" />
+                        <span className="hidden xs:inline sm:inline">Cove</span>
+                        {coveOn && (
+                          <span className="ml-1 sm:ml-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+                        )}
+                      </button>
+
+                      {/* Day / Night View Toggle */}
+                      <button
+                        onClick={() => {
+                          playMechanicalClick(isMuted, !roomDayMode ? "on" : "off");
+                          setRoomDayMode(!roomDayMode);
+                        }}
+                        className="relative isolate flex items-center rounded-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 outline-none transition-all duration-200"
+                        title={roomDayMode ? "Switch to Night 3000K Lighting" : "Switch to Daytime View"}
+                      >
+                        {roomDayMode ? (
+                          <Sun size={15} className="text-amber-500" />
+                        ) : (
+                          <Moon size={15} className="text-indigo-400" />
+                        )}
+                      </button>
+                    </nav>
+
+                    {/* Right: Sound FX & Exit Back to Exterior Villa */}
+                    <div className="flex items-center space-x-1.5 sm:space-x-3">
+                      {/* Audio Toggle */}
+                      <button
+                        onClick={() => setIsMuted(!isMuted)}
+                        className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800/80 text-zinc-400 hover:text-white transition-colors"
+                        title={isMuted ? "Unmute Acoustic Switch Clicks" : "Mute Sound"}
+                      >
+                        {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} className="text-amber-400" />}
+                      </button>
+
+                      {/* Back to Exterior Villa Glide */}
+                      <button
+                        onClick={exitSimulator}
+                        className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-brand-gold border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-all"
+                        title="Zoom back out to exterior villa"
+                      >
+                        <ArrowLeft size={13} />
+                        <span className="hidden sm:inline">Exterior Villa</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </header>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

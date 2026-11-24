@@ -99,8 +99,17 @@ export function Navbar() {
   // Base public links
   const navLinks: { name: string; href: string }[] = [
     { name: "Showcase", href: "/#materials" },
+    { name: "Room Simulator", href: "/?simulator=true" },
     { name: "Contracting", href: "/contracting" },
   ];
+
+  const handleSimulatorClick = (e: React.MouseEvent) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.dispatchEvent(new CustomEvent("open_room_simulator"));
+    }
+  };
 
   // Customers and guests see Tracker; hide customer-specific Tracker from admin
   if (role !== "admin") {
@@ -175,6 +184,7 @@ export function Navbar() {
                     <Link
                       key={link.name}
                       href={link.href}
+                      onClick={link.name === "Room Simulator" ? handleSimulatorClick : undefined}
                       onPointerEnter={(e) =>
                         e.pointerType === "mouse" && setHoveredLink(link.href)
                       }
@@ -293,7 +303,12 @@ export function Navbar() {
                     <Link
                       key={link.name}
                       href={link.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={(e) => {
+                        setIsMobileMenuOpen(false);
+                        if (link.name === "Room Simulator") {
+                          handleSimulatorClick(e);
+                        }
+                      }}
                       className={`block px-4 py-3 rounded-2xl text-base font-medium transition-all duration-300 ease-in-out ${isActive
                           ? "bg-brand-blue/10 text-brand-blue font-semibold"
                           : "text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
