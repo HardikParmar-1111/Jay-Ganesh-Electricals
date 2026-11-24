@@ -78,6 +78,16 @@ export function ArchitecturalHero() {
   // Electrical Hardware Controls inside the Room
   const [downlightsOn, setDownlightsOn] = useState(true);
   const [coveOn, setCoveOn] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     // 1. Always reset to Day mode on mount or refresh
@@ -148,11 +158,6 @@ export function ArchitecturalHero() {
     }
   };
 
-  // Active photographic image:
-  const activeRoomImage = roomDayMode
-    ? "/images/room/villa-interior-day.jpg"
-    : "/images/room/villa-interior-night.jpg";
-
   // Lighting state calculations for smooth, artifact-free illumination:
   const isLightsOff = !downlightsOn && !coveOn;
   const isCoveOnly = !downlightsOn && coveOn;
@@ -166,9 +171,9 @@ export function ArchitecturalHero() {
       <motion.div
         className="absolute inset-0 z-0 origin-center"
         animate={{
-          scale: isSimulatorActive ? 3.5 : 1,
-          x: isSimulatorActive ? "-6%" : "0%",
-          y: isSimulatorActive ? "-16%" : "0%", // Focus on 1st-floor glowing glass facade
+          scale: isSimulatorActive ? (isMobile ? 2.8 : 3.5) : 1,
+          x: isSimulatorActive ? (isMobile ? "0%" : "-6%") : "0%",
+          y: isSimulatorActive ? (isMobile ? "-10%" : "-16%") : "0%", // Focus on 1st-floor glowing glass facade
         }}
         transition={{
           duration: isSimulatorActive ? 2.4 : 1.6,
@@ -177,10 +182,18 @@ export function ArchitecturalHero() {
       >
         {/* DAYTIME VILLA LAYER */}
         <div className="absolute inset-0">
+          {/* Desktop/Laptop (Landscape) */}
           <img
             src="/images/villa-day.jpg"
             alt="Jay Ganesh Architectural Villa - Daylight View"
-            className="w-full h-full object-cover object-[center_38%] sm:object-center"
+            className="hidden sm:block w-full h-full object-cover object-center"
+            loading="eager"
+          />
+          {/* Mobile Phone (Portrait) */}
+          <img
+            src="/images/villa-day-mobile.jpg"
+            alt="Jay Ganesh Architectural Villa - Daylight View"
+            className="block sm:hidden w-full h-full object-cover object-center"
             loading="eager"
           />
         </div>
@@ -192,10 +205,18 @@ export function ArchitecturalHero() {
           animate={{ opacity: isNight ? 1 : 0 }}
           transition={{ duration: 4.8, ease: [0.33, 1, 0.68, 1] }}
         >
+          {/* Desktop/Laptop (Landscape) */}
           <img
             src="/images/villa-night.jpg"
             alt="Jay Ganesh Architectural Villa - Night Illumination"
-            className="w-full h-full object-cover object-[center_38%] sm:object-center"
+            className="hidden sm:block w-full h-full object-cover object-center"
+            loading="eager"
+          />
+          {/* Mobile Phone (Portrait) */}
+          <img
+            src="/images/villa-night-mobile.jpg"
+            alt="Jay Ganesh Architectural Villa - Night Illumination"
+            className="block sm:hidden w-full h-full object-cover object-center"
             loading="eager"
           />
 
@@ -264,28 +285,89 @@ export function ArchitecturalHero() {
             transition={{ delay: 1.1, duration: 1.0, ease: "easeInOut" }}
             className="absolute inset-0 z-40 overflow-hidden bg-black"
           >
-            {/* Real Photographic Layer - Smooth Full-Frame Optical Transition */}
+            {/* Real Photographic Layers - Smooth Full-Frame Day/Night Crossfade & Optical Lighting */}
+            {/* 1. Night Living Room Layer */}
             <motion.div
               className="absolute inset-0 pointer-events-none"
               animate={{
-                filter: !roomDayMode && isLightsOff
+                opacity: roomDayMode ? 0 : 1,
+                filter: isLightsOff
                   ? "brightness(0.24) contrast(1.12) saturate(0.6)"
-                  : !roomDayMode && isCoveOnly
+                  : isCoveOnly
                   ? "brightness(0.68) contrast(1.05)"
-                  : !roomDayMode && isDownlightsOnly
+                  : isDownlightsOnly
                   ? "brightness(0.78) contrast(1.05)"
                   : "brightness(1) contrast(1) saturate(1)",
               }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{
+                opacity: { duration: 0.8, ease: "easeInOut" },
+                filter: { duration: 0.45, ease: "easeInOut" },
+              }}
             >
-              <Image
-                src={activeRoomImage}
-                alt="Villa Living Room"
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover object-center"
-              />
+              {/* Desktop / Laptop User (Landscape) */}
+              <div className="hidden sm:block absolute inset-0">
+                <Image
+                  src="/images/room/villa-interior-night.jpg"
+                  alt="Villa Living Room Night"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+              </div>
+              {/* Mobile Phone User (Portrait) */}
+              <div className="block sm:hidden absolute inset-0">
+                <Image
+                  src="/images/room/villa-interior-mobile.jpg"
+                  alt="Villa Living Room Night Mobile"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+              </div>
+            </motion.div>
+
+            {/* 2. Daytime Living Room Layer with Active Lighting Animations */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{
+                opacity: roomDayMode ? 1 : 0,
+                filter: isLightsOff
+                  ? "brightness(0.78) contrast(1.08) saturate(0.82)"
+                  : isCoveOnly
+                  ? "brightness(0.92) contrast(1.02) saturate(0.95)"
+                  : isDownlightsOnly
+                  ? "brightness(0.96) contrast(1.02) saturate(0.98)"
+                  : "brightness(1.08) contrast(1.02) saturate(1.06)",
+              }}
+              transition={{
+                opacity: { duration: 0.8, ease: "easeInOut" },
+                filter: { duration: 0.45, ease: "easeInOut" },
+              }}
+            >
+              {/* Desktop / Laptop User (Landscape) */}
+              <div className="hidden sm:block absolute inset-0">
+                <Image
+                  src="/images/room/villa-interior-day.jpg"
+                  alt="Villa Living Room Daylight"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+              </div>
+              {/* Mobile Phone User (Portrait) */}
+              <div className="block sm:hidden absolute inset-0">
+                <Image
+                  src="/images/room/villa-interior-mobile-day.jpg"
+                  alt="Villa Living Room Daylight Mobile"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+              </div>
             </motion.div>
 
             {/* ================================================================= */}
