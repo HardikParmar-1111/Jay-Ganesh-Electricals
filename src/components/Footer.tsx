@@ -204,17 +204,26 @@ export function Footer() {
             &copy; {currentYear} Jay Ganesh Electrical. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-6">
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <Link
+              href="/terms-and-warranty"
+              className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+            >
               Terms &amp; Warranty
-            </span>
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
+            </Link>
+            <Link
+              href="/safety-compliance"
+              className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+            >
               Safety Compliance
-            </span>
+            </Link>
             <span className="text-slate-400 dark:text-zinc-600">|</span>
-            <span className="text-amber-600 dark:text-amber-400 font-medium">
+            <Link
+              href="/contracting"
+              className="text-amber-600 dark:text-amber-400 font-medium hover:underline"
+            >
               Turnkey Villa Electrical Contracting
-            </span>
+            </Link>
           </div>
         </div>
       </div>

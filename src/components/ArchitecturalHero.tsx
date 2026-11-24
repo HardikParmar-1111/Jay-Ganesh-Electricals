@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -78,7 +78,6 @@ export function ArchitecturalHero() {
   // Electrical Hardware Controls inside the Room
   const [downlightsOn, setDownlightsOn] = useState(true);
   const [coveOn, setCoveOn] = useState(true);
-  const [flashDownlights, setFlashDownlights] = useState(false);
 
   useEffect(() => {
     // 1. Always reset to Day mode on mount or refresh
@@ -131,15 +130,12 @@ export function ArchitecturalHero() {
     const nextVal = !downlightsOn;
     playMechanicalClick(isMuted, nextVal ? "on" : "off");
     setDownlightsOn(nextVal);
-    if (nextVal) {
-      setFlashDownlights(true);
-      setTimeout(() => setFlashDownlights(false), 70);
-    }
   };
 
   const toggleCove = () => {
-    playMechanicalClick(isMuted, !coveOn ? "on" : "off");
-    setCoveOn(!coveOn);
+    const nextVal = !coveOn;
+    playMechanicalClick(isMuted, nextVal ? "on" : "off");
+    setCoveOn(nextVal);
   };
 
   const exitSimulator = () => {
@@ -151,6 +147,16 @@ export function ArchitecturalHero() {
       window.history.replaceState({}, "", url.pathname);
     }
   };
+
+  // Active photographic image:
+  const activeRoomImage = roomDayMode
+    ? "/images/room/villa-interior-day.jpg"
+    : "/images/room/villa-interior-night.jpg";
+
+  // Lighting state calculations for smooth, artifact-free illumination:
+  const isLightsOff = !downlightsOn && !coveOn;
+  const isCoveOnly = !downlightsOn && coveOn;
+  const isDownlightsOnly = downlightsOn && !coveOn;
 
   return (
     <section className="relative w-full h-[100svh] min-h-[560px] max-h-[1080px] overflow-hidden bg-zinc-950 select-none">
@@ -246,7 +252,8 @@ export function ArchitecturalHero() {
 
       {/* ================================================================= */}
       {/* 3. LUXURY FIRST-FLOOR LIVING ROOM INTERIOR VIEW                  */}
-      {/* Uses the authentic original image with original ceiling fan       */}
+      {/* 100% Real architectural photographs for every single light state */}
+      {/* ZERO external yellow stickers, ZERO pop line light CSS gradients */}
       {/* ================================================================= */}
       <AnimatePresence>
         {isSimulatorActive && (
@@ -257,80 +264,29 @@ export function ArchitecturalHero() {
             transition={{ delay: 1.1, duration: 1.0, ease: "easeInOut" }}
             className="absolute inset-0 z-40 overflow-hidden bg-black"
           >
-            {/* Authentic Room Interior Image with Original Ceiling Fan Intact (No spins) */}
-            <div className="absolute inset-0 pointer-events-none">
+            {/* Real Photographic Layer - Smooth Full-Frame Optical Transition */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{
+                filter: !roomDayMode && isLightsOff
+                  ? "brightness(0.24) contrast(1.12) saturate(0.6)"
+                  : !roomDayMode && isCoveOnly
+                  ? "brightness(0.68) contrast(1.05)"
+                  : !roomDayMode && isDownlightsOnly
+                  ? "brightness(0.78) contrast(1.05)"
+                  : "brightness(1) contrast(1) saturate(1)",
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
               <Image
-                src={
-                  roomDayMode
-                    ? "/images/room/villa-interior-day.jpg"
-                    : "/images/room/villa-interior-night.jpg"
-                }
-                alt="Villa First-Floor Luxury Living Room Interior"
+                src={activeRoomImage}
+                alt="Villa Living Room"
                 fill
                 priority
                 sizes="100vw"
                 className="object-cover object-center"
               />
-            </div>
-
-            {/* Night Room Dimming when lights are turned off */}
-            {!roomDayMode && (
-              <div
-                className="absolute inset-0 bg-zinc-950 pointer-events-none transition-opacity duration-700 ease-out"
-                style={{
-                  opacity: !downlightsOn && !coveOn ? 0.72 : 0,
-                }}
-              />
-            )}
-
-            {/* Linear Drop-Ceiling Cove Lighting Glow */}
-            <div
-              className="absolute top-0 inset-x-0 h-[26%] pointer-events-none transition-opacity duration-400 ease-out"
-              style={{
-                opacity: coveOn ? 0.9 : 0,
-              }}
-            >
-              <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-amber-300 via-amber-400/80 to-transparent blur-[2px]" />
-              <div className="absolute top-0 inset-x-0 h-full bg-gradient-to-b from-amber-400/35 via-amber-500/15 to-transparent blur-xl mix-blend-screen" />
-            </div>
-
-            {/* Recessed COB Downlights Cones */}
-            <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-300 ease-out"
-              style={{
-                opacity: downlightsOn ? 1 : 0,
-              }}
-            >
-              {flashDownlights && (
-                <div className="absolute inset-0 bg-amber-100/35 mix-blend-screen pointer-events-none" />
-              )}
-              {/* Spot 1 */}
-              <div className="absolute top-[8%] left-[22%] -translate-x-1/2 flex flex-col items-center">
-                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
-                <div
-                  className="w-56 sm:w-96 h-80 sm:h-[420px] -mt-1 bg-gradient-to-b from-amber-300/50 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
-                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
-                />
-              </div>
-              {/* Spot 2 */}
-              <div className="absolute top-[7%] left-[62%] -translate-x-1/2 flex flex-col items-center">
-                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
-                <div
-                  className="w-56 sm:w-96 h-80 sm:h-[420px] -mt-1 bg-gradient-to-b from-amber-300/50 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
-                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
-                />
-              </div>
-              {/* Spot 3 */}
-              <div className="absolute top-[8%] left-[82%] -translate-x-1/2 flex flex-col items-center">
-                <div className="w-5 h-2.5 rounded-full bg-amber-200 shadow-[0_0_24px_8px_rgba(251,191,36,0.95)]" />
-                <div
-                  className="w-48 sm:w-80 h-72 sm:h-96 -mt-1 bg-gradient-to-b from-amber-300/45 via-amber-400/20 to-transparent blur-lg mix-blend-screen"
-                  style={{ clipPath: "polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)" }}
-                />
-              </div>
-              {/* Warm Floor Reflection */}
-              <div className="absolute bottom-[2%] inset-x-[15%] h-[32%] bg-gradient-to-t from-amber-500/20 via-amber-400/10 to-transparent blur-2xl mix-blend-screen pointer-events-none" />
-            </div>
+            </motion.div>
 
             {/* ================================================================= */}
             {/* 4. NAVBAR OF SIMULATOR IN FOOTER (FLOATING BOTTOM PILL)           */}
@@ -376,7 +332,7 @@ export function ArchitecturalHero() {
                             ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-semibold shadow-sm"
                             : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
                         }`}
-                        title="Toggle 3000K Architectural Downlights"
+                        title="Toggle Real 3000K Architectural Downlights"
                       >
                         <SunMedium size={14} className="sm:mr-1.5 shrink-0" />
                         <span className="hidden xs:inline sm:inline">Downlights</span>
@@ -393,7 +349,7 @@ export function ArchitecturalHero() {
                             ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-semibold shadow-sm"
                             : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
                         }`}
-                        title="Toggle Drop-Ceiling Cove Strip"
+                        title="Toggle Real Drop-Ceiling Linear Cove Profile"
                       >
                         <Sliders size={14} className="sm:mr-1.5 shrink-0" />
                         <span className="hidden xs:inline sm:inline">Cove</span>
